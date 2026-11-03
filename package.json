@@ -1,0 +1,208 @@
+{
+  "name": "glass-ux-image",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Image editing components and an accelerated image engine for Glass UX.",
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md",
+    "THIRD-PARTY-ASSETS.txt",
+    "docs/**/*.md",
+    "llms.txt",
+    "skills"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/index.d.ts",
+      "import": "./dist/render/index.js"
+    },
+    "./filters/*": {
+      "types": "./dist/filters/*.d.ts",
+      "import": "./dist/filters/*.js"
+    },
+    "./io": {
+      "types": "./dist/io/index.d.ts",
+      "import": "./dist/io/index.js"
+    },
+    "./session": {
+      "types": "./dist/session/index.d.ts",
+      "import": "./dist/session/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./canvas": {
+      "types": "./dist/canvas/index.d.ts",
+      "import": "./dist/canvas/index.js"
+    },
+    "./tools/*": {
+      "types": "./dist/tools/*.d.ts",
+      "import": "./dist/tools/*.js"
+    },
+    "./photo-editor": {
+      "types": "./dist/photo-editor/index.d.ts",
+      "import": "./dist/photo-editor/index.js"
+    },
+    "./i18n/*": {
+      "types": "./dist/i18n/*.d.ts",
+      "import": "./dist/i18n/*.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./panels/*": {
+      "types": "./dist/panels/*.d.ts",
+      "import": "./dist/panels/*.js"
+    },
+    "./controls/*": {
+      "types": "./dist/controls/*.d.ts",
+      "import": "./dist/controls/*.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "import": "./dist/editor/index.js"
+    },
+    "./retouch": {
+      "types": "./dist/retouch/index.d.ts",
+      "import": "./dist/retouch/index.js"
+    },
+    "./codecs/*": {
+      "types": "./dist/codecs/*.d.ts",
+      "import": "./dist/codecs/*.js"
+    },
+    "./messages/*": {
+      "types": "./dist/messages/*.d.ts",
+      "import": "./dist/messages/*.js"
+    },
+    "./filters/develop": {
+      "types": "./dist/filters/develop/index.d.ts",
+      "import": "./dist/filters/develop/index.js"
+    },
+    "./filters/effects/*": {
+      "types": "./dist/filters/effects/*.d.ts",
+      "import": "./dist/filters/effects/*.js"
+    },
+    "./filters/effects": {
+      "types": "./dist/filters/effects/index.d.ts",
+      "import": "./dist/filters/effects/index.js"
+    },
+    "./tools/develop": {
+      "types": "./dist/tools/develop/index.d.ts",
+      "import": "./dist/tools/develop/index.js"
+    },
+    "./tools/effects": {
+      "types": "./dist/tools/effects/index.d.ts",
+      "import": "./dist/tools/effects/index.js"
+    },
+    "./tools/retouch": {
+      "types": "./dist/tools/retouch/index.d.ts",
+      "import": "./dist/tools/retouch/index.js"
+    },
+    "./layers-text": {
+      "types": "./dist/layers-text/index.d.ts",
+      "import": "./dist/layers-text/index.js"
+    },
+    "./tools/retouch/*": {
+      "types": "./dist/tools/retouch/*.d.ts",
+      "import": "./dist/tools/retouch/*.js"
+    },
+    "./tools/text": {
+      "types": "./dist/tools/text/index.d.ts",
+      "import": "./dist/tools/text/index.js"
+    },
+    "./tools/layers": {
+      "types": "./dist/tools/layers/index.d.ts",
+      "import": "./dist/tools/layers/index.js"
+    },
+    "./kits/*": {
+      "types": "./dist/kits/*.d.ts",
+      "import": "./dist/kits/*.js"
+    },
+    "./kits/basic": {
+      "types": "./dist/kits/basic.d.ts",
+      "import": "./dist/kits/basic.js"
+    },
+    "./kits/standard": {
+      "types": "./dist/kits/standard.d.ts",
+      "import": "./dist/kits/standard.js"
+    },
+    "./kits/advanced": {
+      "types": "./dist/kits/advanced.d.ts",
+      "import": "./dist/kits/advanced.js"
+    }
+  },
+  "scripts": {
+    "docs:api": "glass-ux-docs api",
+    "docs:dev": "vite apps/docs",
+    "docs:build": "glass-ux-docs api && pnpm docs:typecheck && pnpm build && vite build apps/docs && glass-ux-docs site && node scripts/docs-finish.mjs",
+    "docs:check": "glass-ux-docs check && pnpm docs:typecheck",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node scripts/build-styles.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json && tsc --noEmit -p apps/demo/tsconfig.json && tsc --noEmit -p e2e/tsconfig.json",
+    "test": "vitest run",
+    "lint": "oxlint --ignore-pattern 'src/gallery/**' --deny-warnings src apps/demo/src e2e",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
+    "dev": "pnpm run build && pnpm --filter glass-ux-image-demo dev",
+    "demo:build": "pnpm run build && pnpm --filter glass-ux-image-demo build",
+    "test:e2e": "pnpm run demo:build && playwright test",
+    "e2e:own": "node scripts/e2e-own.mjs",
+    "size:check": "node scripts/size-check.mjs",
+    "docs:test": "playwright test --config playwright.docs.config.ts",
+    "docs:typecheck": "node scripts/check-doc-samples.mjs && tsc --noEmit -p apps/docs/tsconfig.json"
+  },
+  "dependencies": {
+    "@jsquash/avif": "^2.1.1"
+  },
+  "peerDependencies": {
+    "glass-ux": ">=0.15 <0.16",
+    "react": ">=19 <20",
+    "react-dom": ">=19 <20"
+  },
+  "peerDependenciesMeta": {
+    "glass-ux": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.15.0/glass-ux-0.15.0.tgz",
+    "glass-ux-docs-kit": "https://github.com/Dastari/glass-ux/releases/download/v0.15.0/glass-ux-docs-kit-0.15.0.tgz",
+    "oxlint": "^1.87.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/react-router": "1.170.43",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "^3.9.10",
+    "tailwindcss": "4.3.3",
+    "typedoc": "0.28.20",
+    "vite": "8.3.4"
+  },
+  "homepage": "https://dastari.github.io/glass-ux-image/",
+  "repository": "https://github.com/Dastari/glass-ux-image"
+}

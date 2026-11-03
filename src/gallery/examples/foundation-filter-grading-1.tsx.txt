@@ -1,0 +1,19 @@
+import { effects } from 'glass-ux-image/tools/effects';
+import { generateLut } from 'glass-ux-image/filters/effects/grading';
+import type { EditorSession } from 'glass-ux-image/session';
+
+export const tools = [effects];
+
+const warm = generateLut(17, ([r, g, b]) => [r, g * 0.94, b * 0.78]);
+
+export function addWarmGrade(editor: EditorSession) {
+  editor.run('effects.add', {
+    label: 'Warm grade',
+    entry: {
+      id: 'warm-1',
+      filter: 'lut-grading',
+      params: { amount: 1, lut: warm },
+      strength: 1,
+    },
+  });
+}

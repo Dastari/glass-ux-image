@@ -1,0 +1,6 @@
+import { move } from "glass-ux-image/tools/move";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function MoveEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[move]} />;
+}

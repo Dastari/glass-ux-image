@@ -1,0 +1,6 @@
+import { patch } from "glass-ux-image/tools/retouch/patch";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function PatchEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[patch]} />;
+}

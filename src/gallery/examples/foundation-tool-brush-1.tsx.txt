@@ -1,0 +1,6 @@
+import { brush } from "glass-ux-image/tools/retouch/brush";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function BrushEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[brush]} />;
+}

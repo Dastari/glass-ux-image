@@ -1,0 +1,6 @@
+import { sponge } from "glass-ux-image/tools/retouch/sponge";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function SpongeEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[sponge]} />;
+}

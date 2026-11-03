@@ -1,0 +1,6 @@
+import { liquify } from "glass-ux-image/tools/retouch/liquify";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function LiquifyEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[liquify]} />;
+}

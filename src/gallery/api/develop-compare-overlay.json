@@ -1,0 +1,1 @@
+{"id":"develop-compare-overlay","name":"DevelopCompareOverlay","entry":"glass-ux-image/tools/develop","family":"develop","description":"PhotoEditor overlay, toggled by the Basic section's comparison button.","source":"src/tools/develop/compare.tsx","signature":"(): import(\"react\").JSX.Element | null","props":[],"htmlAttributes":false,"slots":[],"section":"develop"}

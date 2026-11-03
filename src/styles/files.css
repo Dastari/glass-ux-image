@@ -1,0 +1,9 @@
+@layer components {
+  .gi-files { min-inline-size: 0; }
+  .gi-files-preview { margin: 0; display: grid; gap: var(--space-2); }
+  .gi-files-preview > div { block-size: 10rem; display: grid; place-items: center; padding: var(--space-2); background: var(--gi-stage, var(--canvas-solid)); border-radius: var(--radius-tile); overflow: hidden; }
+  .gi-files-preview img { max-inline-size: 100%; max-block-size: 100%; object-fit: contain; }
+  .gi-files-preview figcaption { min-block-size: 1lh; color: var(--fg-muted); font-size: var(--type-caption-size); line-height: var(--type-caption-line); font-variant-numeric: tabular-nums; }
+  .gi-files-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--space-2); }
+  .gi-files [role="status"] { min-block-size: 1lh; }
+}

@@ -1,0 +1,35 @@
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { useImageEditor } from "glass-ux-image/react";
+import { ImageEditorView } from "glass-ux-image/editor";
+import { crop } from "glass-ux-image/tools/crop";
+import { develop } from "glass-ux-image/tools/develop";
+import { effects } from "glass-ux-image/tools/effects";
+import { brush } from "glass-ux-image/tools/retouch/brush";
+import { text } from "glass-ux-image/tools/text";
+
+const photo = `${import.meta.env.BASE_URL}sample.png`;
+const tools = [crop, develop, brush, text, effects];
+
+function ImageEditorViewSample() {
+  const editor = useImageEditor({ source: photo, tools: tools });
+  return (
+    <div className="h-160 w-full min-w-0 overflow-hidden rounded-surface border border-line">
+      <ImageEditorView editor={editor} tools={tools} />
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Over a session the host holds"
+        description="ImageEditorView shows a session the host created, so a filmstrip, a save button or a second view can share it."
+      >
+        <div data-live-demo="image-editor-view" className="w-full">
+          <ImageEditorViewSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

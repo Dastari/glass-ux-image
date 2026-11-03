@@ -1,0 +1,30 @@
+/* The demo application's own frame around ImageEditorView: an open button, recovery and autosave status. */
+@layer theme, base, components, utilities;
+@layer components {
+  .workspace-host {
+    min-block-size: 0;
+    min-inline-size: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .workspace-host-bar {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block-end: var(--space-3);
+  }
+  .workspace-host-status {
+    margin-inline-start: auto;
+  }
+  @media (max-width: 40rem) {
+    .workspace-host-bar {
+      gap: var(--space-1);
+    }
+    .workspace-host-status {
+      display: none;
+    }
+  }
+}

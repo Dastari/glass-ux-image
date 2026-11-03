@@ -1,0 +1,42 @@
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { MetadataPanel } from "glass-ux-image/panels/metadata";
+
+function MetadataPanelSample() {
+  return (
+    <div className="w-full max-w-sm">
+      <MetadataPanel
+        value={{
+          format: "jpeg",
+          packets: [],
+          fields: {
+            cameraMake: "Fujifilm",
+            cameraModel: "X-T5",
+            lens: "XF 16-55mm F2.8",
+            exposureSeconds: 1 / 60,
+            aperture: 8,
+            iso: 400,
+            focalLengthMm: 23,
+            date: "2026:04:18 18:42:07",
+            gps: { latitude: -44.0048, longitude: 170.4771 },
+          },
+          presence: { exif: true, xmp: false, iptc: false },
+        }}
+      />
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Camera details"
+        description="Read-only fields from a parsed file, with no session. Use it beside a picture in a gallery or an upload form."
+      >
+        <div data-live-demo="metadata-panel" className="w-full">
+          <MetadataPanelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

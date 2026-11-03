@@ -1,0 +1,6 @@
+import { straighten } from "glass-ux-image/tools/straighten";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function StraightenEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[straighten]} />;
+}

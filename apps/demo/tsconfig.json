@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": [
+      "vite/client"
+    ],
+    "paths": {
+      "glass-ux-image/*": [
+        "../../src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

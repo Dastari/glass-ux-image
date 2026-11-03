@@ -1,0 +1,6 @@
+import { transform } from "glass-ux-image/tools/transform";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function TransformEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[transform]} />;
+}

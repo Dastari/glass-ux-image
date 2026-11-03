@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "inlineSources": true
+  },
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/gallery"
+  ]
+}

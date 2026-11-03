@@ -1,0 +1,11 @@
+# Glass UX Image
+
+Image editing components for Glass UX. Hosts own saving, transport and persistence. Pixels are linear premultiplied RGBA. Read the installed version’s public API before writing code.
+
+- [Getting started](docs/getting-started.md)
+- [Choosing a level](docs/choosing-a-level.md)
+- [Host control](docs/host-control.md)
+- [Headless](docs/headless.md)
+- [API index](docs/api/README.md)
+- [Adoption skill](skills/glass-ux-image-adopt/SKILL.md)
+- [Extension skill](skills/glass-ux-image-extend/SKILL.md)

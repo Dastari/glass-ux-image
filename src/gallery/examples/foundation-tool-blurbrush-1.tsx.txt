@@ -1,0 +1,6 @@
+import { blurBrush } from "glass-ux-image/tools/retouch/blur";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function BlurBrushEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[blurBrush]} />;
+}

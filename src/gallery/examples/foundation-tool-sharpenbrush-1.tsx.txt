@@ -1,0 +1,6 @@
+import { sharpenBrush } from "glass-ux-image/tools/retouch/sharpen";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function SharpenBrushEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[sharpenBrush]} />;
+}

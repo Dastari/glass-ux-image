@@ -1,0 +1,22 @@
+{
+  "roots": {
+    "editor": "image-editor",
+    "photo-editor": "photo-editor",
+    "canvas": "image-canvas",
+    "develop": "develop-basic-panel",
+    "basic": "basic-adjustments",
+    "layers": "layers-panel",
+    "presets": "presets-panel",
+    "export": "export-panel",
+    "metadata": "metadata-panel",
+    "batch": "batch-panel",
+    "blend-mode": "blend-mode-select",
+    "retouch": "retouch-panel",
+    "text": "text-panel",
+    "effects": "filter-gallery-panel",
+    "canvas-size": "anchor-picker",
+    "move": "transform-target",
+    "react": "image-editor-provider"
+  },
+  "related": {}
+}

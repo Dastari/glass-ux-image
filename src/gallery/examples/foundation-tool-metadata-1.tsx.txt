@@ -1,0 +1,6 @@
+import { metadataTool } from "glass-ux-image/tools/export";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function MetadataToolEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[metadataTool]} />;
+}

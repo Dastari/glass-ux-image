@@ -1,0 +1,6 @@
+import { batchTool } from "glass-ux-image/tools/export";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function BatchToolEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[batchTool]} />;
+}

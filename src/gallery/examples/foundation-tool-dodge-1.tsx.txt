@@ -1,0 +1,6 @@
+import { dodge } from "glass-ux-image/tools/retouch/dodge";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function DodgeEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[dodge]} />;
+}

@@ -1,0 +1,6 @@
+import { basic } from 'glass-ux-image/kits/basic';
+import { PhotoEditor } from 'glass-ux-image/photo-editor';
+
+export function Editor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={basic} />;
+}

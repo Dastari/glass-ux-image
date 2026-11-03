@@ -1,0 +1,6 @@
+import { adjust } from "glass-ux-image/tools/adjust";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function AdjustEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[adjust]} />;
+}

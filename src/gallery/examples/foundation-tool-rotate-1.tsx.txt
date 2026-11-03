@@ -1,0 +1,6 @@
+import { rotate } from "glass-ux-image/tools/rotate";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function RotateEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[rotate]} />;
+}

@@ -1,0 +1,6 @@
+import { layers } from "glass-ux-image/tools/layers";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function LayersEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[layers]} />;
+}

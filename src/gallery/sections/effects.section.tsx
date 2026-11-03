@@ -1,0 +1,92 @@
+import { type ReactNode, useEffect } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { ImageCanvas } from "glass-ux-image/canvas";
+import { ImageEditorProvider, useImageEditor, useSessionState } from "glass-ux-image/react";
+import type { EditorSession } from "glass-ux-image/session";
+import { EffectsStackPanel, FilterGalleryPanel, effects } from "glass-ux-image/tools/effects";
+
+const photo = `${import.meta.env.BASE_URL}sample.png`;
+
+/** The sample photo in a contained stage, with a panel beside it as in an editor window. */
+function Stage({ editor, canvas, onReady, children }: {
+  editor: EditorSession;
+  canvas?: ReactNode;
+  onReady?: (editor: EditorSession) => unknown;
+  children?: ReactNode;
+}) {
+  const { status } = useSessionState(editor);
+  const ready = status === "ready";
+  useEffect(() => {
+    // Seed once, when the photo opens: a fresh session has nothing to undo.
+    if (ready && onReady && !editor.state.canUndo) void onReady(editor);
+  }, [editor, ready, onReady]);
+  return (
+    <ImageEditorProvider editor={editor}>
+      <div className="flex h-120 w-full min-w-0 flex-col overflow-hidden rounded-surface border border-line">
+        <div className="flex min-h-0 flex-1">
+          <div className="relative min-w-0 flex-1">
+            {ready && canvas ? canvas : <ImageCanvas aria-label="Sample photo" className="absolute inset-0" />}
+          </div>
+          {children && (
+            <div className="w-80 shrink-0 overflow-y-auto border-s border-line p-4">
+              {ready ? children : <p role="status" className="type-caption text-fg-muted">Opening sample…</p>}
+            </div>
+          )}
+        </div>
+      </div>
+    </ImageEditorProvider>
+  );
+}
+
+// Two effects already applied, as a person might have left them.
+function addEffects(editor: EditorSession) {
+  editor.run("effects.add", {
+    label: "Add faded colours",
+    entry: { id: "faded-1", filter: "faded", params: { amount: 1 }, strength: 0.6 },
+  });
+  editor.run("effects.add", {
+    label: "Add vignette",
+    entry: { id: "vignette-1", filter: "vignette", params: { amount: 1, radius: 2 }, strength: 0.8 },
+  });
+}
+
+function EffectsStackPanelSample() {
+  const editor = useImageEditor({ source: photo, tools: [effects] });
+  return (
+    <Stage editor={editor} onReady={addEffects}>
+      <EffectsStackPanel />
+    </Stage>
+  );
+}
+
+function FilterGalleryPanelSample() {
+  const editor = useImageEditor({ source: photo, tools: [effects] });
+  return (
+    <Stage editor={editor}>
+      <FilterGalleryPanel category="light" />
+    </Stage>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Applied effects"
+        description="The effects on the picture, in the order they run. Each can be edited, blended, reordered or removed, and every change is a labelled action."
+      >
+        <div data-live-demo="effects-stack-panel" className="w-full">
+          <EffectsStackPanelSample />
+        </div>
+      </Specimen>
+      <Specimen
+        title="Add an effect"
+        description="One category of effects as thumbnails of the open picture, here Light. Choosing one adds it to the stack as an undoable step."
+      >
+        <div data-live-demo="filter-gallery-panel" className="w-full">
+          <FilterGalleryPanelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

@@ -1,0 +1,6 @@
+import { text } from "glass-ux-image/tools/text";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function TextEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[text]} />;
+}

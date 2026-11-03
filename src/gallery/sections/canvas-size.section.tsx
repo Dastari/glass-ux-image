@@ -1,0 +1,42 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { AnchorPicker, type CanvasAnchor } from "glass-ux-image/tools/canvas-size";
+
+const names = [
+  "top left",
+  "top",
+  "top right",
+  "left",
+  "centre",
+  "right",
+  "bottom left",
+  "bottom",
+  "bottom right",
+];
+
+function AnchorPickerSample() {
+  const [anchor, setAnchor] = useState<CanvasAnchor>(4);
+  return (
+    <div className="flex w-full max-w-48 flex-col gap-3">
+      <AnchorPicker value={anchor} onValueChange={setAnchor} />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        Anchor {anchor}: {names[anchor]}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Choose an anchor"
+        description="Where the picture stays when the canvas grows or shrinks around it. Cells run from 0 at the top left to 8 at the bottom right, in image space, so they do not mirror in right-to-left languages. Arrow keys move between them."
+      >
+        <div data-live-demo="anchor-picker" className="w-full">
+          <AnchorPickerSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

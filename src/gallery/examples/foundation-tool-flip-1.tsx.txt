@@ -1,0 +1,6 @@
+import { flip } from "glass-ux-image/tools/flip";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function FlipEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[flip]} />;
+}

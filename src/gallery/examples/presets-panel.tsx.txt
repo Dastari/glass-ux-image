@@ -1,0 +1,51 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { PresetsPanel, type ImagePreset } from "glass-ux-image/panels/presets";
+
+// Each preset is a patch over the recipe; develop settings merge with what is already there.
+const presets: ImagePreset[] = [
+  {
+    id: "warm",
+    label: "Golden hour",
+    change: { filters: { develop: { temperature: 35, exposure: 0.2 } } },
+  },
+  {
+    id: "cool",
+    label: "Blue hour",
+    change: { filters: { develop: { temperature: -30, tint: 8 } } },
+  },
+  { id: "punch", label: "Vivid", change: { filters: { develop: { vibrance: 40, contrast: 20 } } } },
+  {
+    id: "mono",
+    label: "Black and white",
+    change: { filters: { develop: { saturation: -100, contrast: 25 } } },
+  },
+  { id: "matte", label: "Matte", change: { filters: { develop: { blacks: 30, contrast: -15 } } } },
+];
+
+function PresetsPanelSample() {
+  const [chosen, setChosen] = useState<ImagePreset | null>(null);
+  return (
+    <div className="flex w-full max-w-xs flex-col gap-3">
+      <PresetsPanel presets={presets} onSelectedIdChange={(_id, preset) => setChosen(preset)} />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {chosen ? `Chosen: ${chosen.label}` : "Nothing chosen yet"}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="A list of presets"
+        description="Choosing one only reports it, so a host can preview it, confirm it or save it as a favourite."
+      >
+        <div data-live-demo="presets-panel" className="w-full">
+          <PresetsPanelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

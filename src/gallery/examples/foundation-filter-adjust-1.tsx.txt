@@ -1,0 +1,10 @@
+import { adjust } from 'glass-ux-image/filters/adjust';
+import type { EditorSession } from 'glass-ux-image/session';
+
+// Pass in the session's filters: createEditorSession({ source, filters }).
+export const filters = [adjust];
+
+// The recipe holds the parameters under the filter's id.
+export function warmUp(editor: EditorSession) {
+  editor.run('edit.apply', { filters: { [adjust.id]: { brightness: 10, contrast: 15, saturation: 10, warmth: 25 } } });
+}

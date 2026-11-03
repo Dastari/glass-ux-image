@@ -1,0 +1,6 @@
+import { eraser } from "glass-ux-image/tools/retouch/eraser";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function EraserEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[eraser]} />;
+}

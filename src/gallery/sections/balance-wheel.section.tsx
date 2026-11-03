@@ -1,0 +1,33 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { BalanceWheel } from "glass-ux-image/controls/balance-wheel";
+
+type Offsets = readonly [number, number, number];
+const signed = (n: number) => (n > 0 ? `+${Math.round(n)}` : `${Math.round(n)}`);
+
+function BalanceWheelSample() {
+  const [offsets, setOffsets] = useState<Offsets>([30, 6, -30]);
+  return (
+    <div className="flex w-full max-w-xs flex-col items-center gap-3">
+      <BalanceWheel aria-label="Highlights" size="md" value={offsets} onValueChange={setOffsets} />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        Red {signed(offsets[0])}, green {signed(offsets[1])}, blue {signed(offsets[2])}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Warmer highlights"
+        description="Drag towards a colour to push the range that way; the further out, the stronger. A double press returns to neutral. The value is the develop filter's signed red, green and blue offsets."
+      >
+        <div data-live-demo="balance-wheel" className="w-full">
+          <BalanceWheelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

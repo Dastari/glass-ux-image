@@ -1,0 +1,22 @@
+@layer components {
+  .gi-develop-fields { display: grid; gap: var(--space-4); min-inline-size: 0; }
+  .gi-panel.gi-develop-fields { display: flex; }
+  /* The balance wheel centres under its range switch, as the colour grading wheels do in Lightroom. */
+  .gi-develop-balance { margin-inline:auto; margin-block-start:var(--space-2); }
+  .gi-develop-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .gi-develop-curve { inline-size: 100%; max-block-size: 16rem; overflow: visible; touch-action: none; }
+  .gi-develop-curve-grid { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+  .gi-develop-curve-line { fill: none; stroke: var(--fg); stroke-width: 2; }
+  .gi-develop-curve-hit { fill: transparent; pointer-events: all; cursor: move; }
+  .gi-develop-curve-point { pointer-events: none; fill: var(--canvas-solid); stroke: var(--fg); stroke-width: 2; cursor: move; }
+  .gi-develop-curve-point[data-selected] { fill: var(--accent); }
+  .gi-develop-histogram { min-inline-size: 0; display: grid; gap: var(--space-1-5); }
+  .gi-develop-histogram-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--control-h-sm); }
+  .gi-develop-histogram-title { min-inline-size: 0; overflow: clip; overflow-clip-margin: var(--focus-reach); text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--weight-medium); }
+  /* Under 5rem the chart takes its micro tier: columns only, no axis ticks to read. */
+  .gi-develop-histogram-chart { padding: var(--space-2); }
+  .gi-develop-histogram-chart > .fa-chart { block-size: 4.5rem; }
+  .gi-develop-compare { position: absolute; inset: 0; z-index: 1; background: var(--gi-stage); }
+  .gi-develop-compare > .fa-compare { block-size: 100%; }
+  .gi-develop-compare img { display: block; inline-size: 100%; block-size: 100%; object-fit: contain; }
+}

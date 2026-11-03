@@ -1,0 +1,6 @@
+import { exportTool } from "glass-ux-image/tools/export";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function ExportToolEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[exportTool]} />;
+}

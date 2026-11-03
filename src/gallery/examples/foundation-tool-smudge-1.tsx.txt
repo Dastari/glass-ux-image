@@ -1,0 +1,6 @@
+import { smudge } from "glass-ux-image/tools/retouch/smudge";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function SmudgeEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[smudge]} />;
+}

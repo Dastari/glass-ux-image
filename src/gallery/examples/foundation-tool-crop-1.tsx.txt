@@ -1,0 +1,6 @@
+import { crop } from "glass-ux-image/tools/crop";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function CropEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[crop]} />;
+}

@@ -1,0 +1,21 @@
+@layer components {
+  .gi-brush-picker { display: grid; gap: var(--space-4); min-inline-size: 0; }
+  .gi-brush-setting { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 6rem); gap: var(--space-1-5) var(--space-2); align-items: center; font-size: var(--type-label-size); line-height: var(--type-label-line); }
+  .gi-brush-setting > :last-child { grid-column: 1 / -1; }
+  .gi-retouch-panel { min-inline-size: 0; }
+  .gi-retouch-field { display: grid; gap: var(--space-2); font-size: var(--type-label-size); line-height: var(--type-label-line); }
+  .gi-retouch-help { font-size: var(--type-caption-size); color: var(--fg-muted); margin-block: 0; }
+  .gi-retouch-panel { gap: var(--space-5); }
+  .gi-retouch-error { position: absolute; inset-block-end: var(--space-3); inset-inline-start: var(--space-3); pointer-events:none; }
+  .gi-retouch-rect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .gi-retouch-overlay { position: absolute; inset: 0; touch-action: none; cursor: none; outline: none; }
+  .gi-stage[data-panning] .gi-retouch-overlay { pointer-events: none; }
+  .gi-retouch-overlay:focus-visible { outline: var(--focus-ring-width) solid var(--accent-ring); outline-offset: calc(-1 * var(--focus-ring-width)); }
+  .gi-brush-cursor { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; overflow: visible; }
+  /* Spatial marks must stay visible against both black and white image pixels. */
+  .gi-brush-cursor ellipse, .gi-brush-cursor path, .gi-brush-cursor circle, .gi-brush-cursor polygon { fill: none; stroke: white; stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .gi-brush-cursor .gi-cursor-shadow { stroke: black; stroke-width: 3; }
+  .gi-brush-cursor [data-inner], .gi-brush-cursor [data-inner-shadow] { stroke-dasharray: 3 2; }
+  .gi-brush-cursor [data-patch-outline] { stroke-dasharray: 5 3; }
+  @media (forced-colors: active) { .gi-brush-cursor ellipse, .gi-brush-cursor path, .gi-brush-cursor circle, .gi-brush-cursor polygon { stroke: CanvasText; filter: none; } }
+}

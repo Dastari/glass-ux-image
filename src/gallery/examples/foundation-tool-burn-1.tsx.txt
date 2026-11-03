@@ -1,0 +1,6 @@
+import { burn } from "glass-ux-image/tools/retouch/burn";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function BurnEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[burn]} />;
+}

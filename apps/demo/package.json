@@ -1,0 +1,25 @@
+{
+  "name": "glass-ux-image-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4330",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4331 --strictPort"
+  },
+  "dependencies": {
+    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.15.0/glass-ux-0.15.0.tgz",
+    "glass-ux-image": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "6.1.2",
+    "tailwindcss": "4.3.3",
+    "vite": "8.3.4"
+  }
+}

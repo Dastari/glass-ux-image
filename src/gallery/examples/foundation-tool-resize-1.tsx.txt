@@ -1,0 +1,6 @@
+import { resize } from "glass-ux-image/tools/resize";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function ResizeEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[resize]} />;
+}

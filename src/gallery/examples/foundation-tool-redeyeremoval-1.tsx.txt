@@ -1,0 +1,6 @@
+import { redEyeRemoval } from "glass-ux-image/tools/retouch/red-eye";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function RedEyeRemovalEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[redEyeRemoval]} />;
+}

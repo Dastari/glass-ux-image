@@ -1,0 +1,48 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { CurvesEditor, type CurvePoint } from "glass-ux-image/controls/curves";
+
+const format = (points: readonly CurvePoint[]) =>
+  points.map(([x, y]) => `(${x.toFixed(2)}, ${y.toFixed(2)})`).join(" ");
+
+function CurvesEditorSample() {
+  const [points, setPoints] = useState<readonly CurvePoint[]>([
+    [0, 0],
+    [0.25, 0.2],
+    [0.75, 0.82],
+    [1, 1],
+  ]);
+  return (
+    <div className="flex w-full max-w-xs flex-col gap-3">
+      <CurvesEditor aria-label="Contrast curve" value={points} onValueChange={setPoints} />
+      <output aria-live="polite" className="type-caption text-fg-muted">{format(points)}</output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="A gentle S-curve"
+        description="Drag a point, or choose it in the list and type its input and output. Points are plain values from 0 to 1; this one adds contrast without clipping."
+      >
+        <div data-live-demo="curves-editor" className="w-full">
+          <CurvesEditorSample />
+        </div>
+      </Specimen>
+      <Specimen title="Disabled" description="Shows a recorded curve that cannot change.">
+        <div data-live-demo="disabled-curve" className="w-full max-w-xs">
+          <CurvesEditor
+            disabled
+            defaultValue={[
+              [0, 0.05],
+              [0.5, 0.58],
+              [1, 0.95],
+            ]}
+          />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

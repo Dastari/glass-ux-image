@@ -1,0 +1,6 @@
+import { spotHealing } from "glass-ux-image/tools/retouch/spot-heal";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function SpotHealingEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[spotHealing]} />;
+}

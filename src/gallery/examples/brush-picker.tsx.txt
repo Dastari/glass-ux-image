@@ -1,0 +1,42 @@
+/* tokens:allow-file Paint colours are image data, not interface colours. */
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { BrushPicker, type BrushValues } from "glass-ux-image/controls/brush-picker";
+
+function BrushPickerSample() {
+  const [brush, setBrush] = useState<BrushValues>({
+    size: 48,
+    hardness: 0.6,
+    opacity: 0.8,
+    flow: 1,
+    colour: "#e9a46b",
+  });
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-3">
+      <BrushPicker
+        value={brush}
+        onValueChange={setBrush}
+        swatches={["#f4efe6", "#e9a46b", "#c0587a", "#3a4a8c", "#1b2a22"]}
+      />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {brush.size} px, hardness {Math.round(brush.hardness * 100)}%, opacity{" "}
+        {Math.round(brush.opacity * 100)}%, flow {Math.round(brush.flow * 100)}%, {brush.colour}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Paint settings"
+        description="Size, hardness, opacity, flow and colour, with no session. Swatches are the host's: these are taken from the sample photo."
+      >
+        <div data-live-demo="brush-picker" className="w-full">
+          <BrushPickerSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

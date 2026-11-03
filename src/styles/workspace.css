@@ -1,0 +1,69 @@
+@layer components {
+  /* The workspace: a chrome bar, the panes as panels, and a status line, all on one set of edges. */
+  .gi-image-editor { container-type: size; display: grid; grid-template-rows: auto minmax(0,1fr) auto; gap: var(--gap-panels); block-size: 100%; min-block-size: 0; min-inline-size: 0; }
+  .gi-workspace-top { display:flex; align-items:center; gap:var(--space-1); min-block-size: calc(var(--control-h-md) + var(--space-2)); padding:var(--space-1) var(--space-2); padding-inline-start:var(--space-1-5); min-inline-size:0; }
+  .gi-workspace-top > .fa-menubar-box { min-inline-size:0; flex:0 1 auto; max-inline-size:50%; }
+  .gi-workspace-title { flex:1; min-inline-size:0; text-align:center; color:var(--fg-muted); font-size:var(--type-label-size); font-weight:var(--weight-medium); overflow:clip; overflow-clip-margin:var(--focus-reach); text-overflow:ellipsis; white-space:nowrap; }
+  .gi-workspace-actions { display:flex; align-items:center; gap:var(--space-1); flex:none; }
+  .gi-workspace-actions > .gi-workspace-divider { inline-size:var(--border-width); block-size:var(--icon-md); margin-inline:var(--space-1); background:var(--line); }
+  .gi-workspace-body { position:relative; min-block-size:0; min-inline-size:0; }
+  .gi-workspace-panes { block-size:100%; }
+  .gi-workspace-region { block-size:100%; min-inline-size:0; min-block-size:0; }
+
+  /* Pane titles are quiet overlines; the stage has no pane chrome at all. */
+  .gi-workspace-panes .fa-pane-bar { --_bar: var(--control-h-sm); block-size: calc(var(--control-h-sm) + var(--space-2)); padding-block-start: var(--space-2); padding-inline: var(--space-3) var(--space-2); }
+  .gi-workspace-panes .fa-pane-title { padding-inline: 0; color: var(--fg-subtle); font-size: var(--type-overline-size); line-height: var(--type-overline-line); font-weight: var(--type-overline-weight); letter-spacing: var(--type-overline-tracking); text-transform: uppercase; }
+  .gi-workspace-panes .fa-pane-stack:has(.gi-workspace-stage) > .fa-pane-bar { display:none; }
+
+  /* The picture sits in a dark, rounded well inset inside its panel (principle 1: never judged through glass). */
+  .gi-workspace-stage { block-size:100%; min-block-size:0; min-inline-size:0; padding:var(--space-1-5); }
+  .gi-workspace-stage > .gi-stage { block-size:100%; border-radius:var(--radius-tile); }
+  .gi-workspace-compare { position:absolute; inset:0; z-index:2; background:var(--gi-stage); display:grid; place-items:stretch; }
+  .gi-workspace-compare img { inline-size:100%; block-size:100%; object-fit:contain; }
+
+  /* Side columns: one rhythm for every group, and accordions that breathe. */
+  .gi-workspace-region-content, .gi-workspace-right-content { padding:var(--space-1) var(--space-3); padding-block-end:calc(var(--space-3) + var(--focus-reach)); }
+  /* The rail takes a little of the column's inset, leaving the focus ring room, so every tool and Reset fit in every language. */
+  .gi-workspace-right-content > .gi-tool-rail { margin-inline:calc(var(--space-1) * -1); }
+  .gi-workspace-right-content { display:flex; flex-direction:column; gap:var(--space-4); }
+  .gi-workspace-region-content, .gi-workspace-right-content { contain:inline-size; }
+  .gi-workspace-right-content > * { flex-shrink:0; }
+  .gi-workspace-right .gi-develop-histogram { padding:0; }
+  .gi-workspace-tool { display:flex; flex-direction:column; gap:var(--space-3); padding-block-end:var(--space-2); }
+  .gi-workspace-tool-title { margin:0; font-size:var(--type-subtitle-size); line-height:var(--type-subtitle-line); font-weight:var(--type-subtitle-weight); letter-spacing:var(--type-subtitle-tracking); }
+  .gi-workspace-right .fa-accordion .gi-develop-histogram { display:none; }
+  .gi-workspace-region-content > .fa-accordion, .gi-workspace-right-content > .fa-accordion { margin-inline: calc(var(--space-1) * -1); }
+
+  /* Filmstrip: real thumbnails, a caption under each, and an accent ring on the chosen one. */
+  .gi-workspace-bottom { min-inline-size:0; block-size:100%; display:grid; align-content:center; }
+  .gi-filmstrip { block-size:100%; padding:var(--space-1) var(--space-2); min-inline-size:0; }
+  /* The strip centres its tiles, so the space above and below a tile matches the pane's side inset. */
+  .gi-workspace-bottom .gi-filmstrip { padding-block:var(--focus-reach); display:flex; align-items:center; }
+  .gi-workspace-bottom .gi-filmstrip > * { flex:1; min-inline-size:0; }
+  .gi-filmstrip .fa-toolbar { inline-size:max-content; min-inline-size:100%; }
+  .gi-filmstrip .fa-toolbar-group { gap:var(--space-2); }
+  .gi-filmstrip .gi-filmstrip-picture { block-size:auto; inline-size:5.5rem; min-inline-size:0; flex-direction:column; align-items:stretch; justify-content:flex-start; gap:var(--space-1); padding:var(--space-1); border-radius:var(--radius-tile); }
+  .gi-filmstrip .gi-filmstrip-picture > img, .gi-filmstrip .gi-filmstrip-picture > svg { inline-size:100%; block-size:auto; aspect-ratio:3 / 2; flex-shrink:0; object-fit:contain; border-radius:var(--radius-control); background:var(--gi-stage, var(--canvas-solid)); box-shadow:0 0 0 var(--border-width) var(--line); }
+  .gi-filmstrip .gi-filmstrip-picture > svg { padding:var(--space-3); color:var(--fg-muted); }
+  .gi-filmstrip .gi-filmstrip-picture[aria-checked="true"] > img, .gi-filmstrip .gi-filmstrip-picture[aria-checked="true"] > svg { box-shadow:0 0 0 var(--border-width-strong) var(--accent); }
+  .gi-filmstrip .gi-filmstrip-picture .fa-btn-label { max-inline-size:100%; overflow:clip; overflow-clip-margin:var(--focus-reach); text-overflow:ellipsis; white-space:nowrap; font-size:var(--type-caption-size); text-align:center; }
+
+  /* Focus: PaneLayout floats the other stacks over the stage, so the picture runs to the edges. */
+  .gi-image-editor[data-workspace="focus"] .gi-workspace-stage { padding:0; }
+
+  .gi-image-editor[data-pan-held] .gi-stage { cursor:grab; }
+  .gi-image-editor[data-pan-held] .gi-stage [data-canvas-tool], .gi-image-editor[data-pan-held] .gi-stage [data-canvas-tool] * { pointer-events:none; }
+
+  @container (max-width: 40rem) {
+    .gi-workspace-title { display:none; }
+    .gi-workspace-top { flex-wrap:nowrap; }
+    .gi-workspace-top > .fa-menubar-box { flex:1 1 0; max-inline-size:none; }
+    .gi-workspace-actions > .fa-btn[data-icon-only], .gi-workspace-actions > .gi-workspace-divider { display:none; }
+  }
+}
+@layer components {
+  /* A large kit wraps its tool icons onto rows instead of running off the side. */
+  .gi-photo-side .fa-scroll-content > .fa-toolbar { flex-shrink:0; overflow:visible; padding:var(--focus-reach); margin-inline:calc(var(--focus-reach) * -1); }
+  .gi-photo-side .fa-scroll-content > .fa-toolbar > .fa-toolbar-unit { flex:1 1 auto; min-inline-size:0; flex-wrap:wrap; }
+  .gi-photo-side .fa-scroll-content > .fa-toolbar .fa-toolbar-group { flex:1 1 auto; min-inline-size:0; flex-wrap:wrap; }
+}

@@ -1,0 +1,10 @@
+import { gaussianBlur } from 'glass-ux-image/filters/gaussian-blur';
+import type { EditorSession } from 'glass-ux-image/session';
+
+// Pass in the session's filters: createEditorSession({ source, filters }).
+export const filters = [gaussianBlur];
+
+// The recipe holds the parameters under the filter's id.
+export function softenBackground(editor: EditorSession) {
+  editor.run('edit.apply', { filters: { [gaussianBlur.id]: { sigma: 6 } } });
+}

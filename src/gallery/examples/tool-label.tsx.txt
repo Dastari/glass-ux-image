@@ -1,0 +1,43 @@
+import { useCallback, useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { ToolLabel } from "glass-ux-image/editor";
+import { crop } from "glass-ux-image/tools/crop";
+import { develop } from "glass-ux-image/tools/develop";
+import { effects } from "glass-ux-image/tools/effects";
+import { brush } from "glass-ux-image/tools/retouch/brush";
+import { text } from "glass-ux-image/tools/text";
+
+const tools = [crop, develop, brush, text, effects];
+
+function ToolLabelSample() {
+  const [labels, setLabels] = useState<Record<string, string>>({});
+  const onLabel = useCallback(
+    (id: string, label: string) => setLabels((current) => ({ ...current, [id]: label })),
+    [],
+  );
+  return (
+    <div className="flex flex-col gap-2">
+      {tools.map((tool) => (
+        <ToolLabel key={tool.id} tool={tool} onLabel={onLabel} />
+      ))}
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {tools.map((tool) => `${tool.id}: ${labels[tool.id] ?? "…"}`).join(", ")}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Tool names"
+        description="Reports each tool's name in the current language, for hosts that build their own menus or action labels."
+      >
+        <div data-live-demo="tool-label" className="w-full">
+          <ToolLabelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

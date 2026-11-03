@@ -1,0 +1,33 @@
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { ImageEditor } from "glass-ux-image/editor";
+import { crop } from "glass-ux-image/tools/crop";
+import { develop } from "glass-ux-image/tools/develop";
+import { effects } from "glass-ux-image/tools/effects";
+import { brush } from "glass-ux-image/tools/retouch/brush";
+import { text } from "glass-ux-image/tools/text";
+
+const photo = `${import.meta.env.BASE_URL}sample.png`;
+const tools = [crop, develop, brush, text, effects];
+
+function ImageEditorSample() {
+  return (
+    <div className="h-160 w-full min-w-0 overflow-hidden rounded-surface border border-line">
+      <ImageEditor src={photo} tools={tools} />
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="A workspace for one picture"
+        description="ImageEditor opens a source and owns its session: tool rail, canvas, settings and history. Use it when the host has one picture and no need to reach the session."
+      >
+        <div data-live-demo="image-editor" className="w-full">
+          <ImageEditorSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+test-results
+playwright-report
+.handoff
+mockups/shots/thread
+apps/demo/dist
+.docs-kit/
+apps/docs/dist/
+src/gallery/.checked-samples/

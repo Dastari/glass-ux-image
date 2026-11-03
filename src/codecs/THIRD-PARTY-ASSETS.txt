@@ -1,0 +1,17 @@
+Third-party assets: optional AVIF codec
+
+@jsquash/avif 2.1.1: Apache-2.0. Copyright Google and Jamie Sinclair.
+Source: https://github.com/jamsinclair/jSquash/tree/main/packages/avif
+Derived from Squoosh (Apache-2.0): https://github.com/GoogleChromeLabs/squoosh
+The packaged encoder README identifies libavif v1.0.1 (BSD-2-Clause).
+libavif links libaom (BSD-2-Clause and Alliance for Open Media Patent License 1.0).
+libavif's licence inventory also contains third-party component notices; retain the entire inventory.
+No claim is made that these licences resolve third-party patent claims. The owner selects deployment.
+Only the single-threaded encoder and its WASM are used; decoder/MT assets are not used.
+Strict CSP: omitting wasm-unsafe-eval can prevent WebAssembly.compile. The worker reports that as
+unavailable and the format selector disables AVIF. No automatic format substitution is offered.
+
+JSQUASH-LICENSE.txt
+LIBAVIF-LICENSE.txt
+LIBAOM-LICENSE.txt
+AOM-PATENTS.txt

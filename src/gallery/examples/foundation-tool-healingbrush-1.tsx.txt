@@ -1,0 +1,6 @@
+import { healingBrush } from "glass-ux-image/tools/retouch/heal";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function HealingBrushEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[healingBrush]} />;
+}

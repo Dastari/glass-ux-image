@@ -1,0 +1,62 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { BatchPanel } from "glass-ux-image/panels/batch";
+import { createEditorSession } from "glass-ux-image/session";
+
+function BatchPanelSample() {
+  const [completed, setCompleted] = useState<number | null>(null);
+  return (
+    <div className="flex w-full max-w-md flex-col gap-3">
+      <BatchPanel
+        renderOne={async (blob, settings) => {
+          // The host renders each file. Here: open it, then encode it with the chosen settings.
+          const editor = createEditorSession({ source: blob });
+          try {
+            await new Promise<void>((resolve, reject) => {
+              const check = () => {
+                if (editor.state.status === "ready") {
+                  stop();
+                  resolve();
+                } else if (editor.state.status === "failed") {
+                  stop();
+                  reject(editor.state.error);
+                }
+              };
+              const stop = editor.subscribe(check);
+              check();
+            });
+            return await editor.result().toBlob({
+              type: settings.format,
+              quality: settings.quality,
+              width: settings.width,
+              height: settings.height,
+            });
+          } finally {
+            editor.dispose();
+          }
+        }}
+        onComplete={(results) =>
+          setCompleted(results.filter((r) => r.status === "fulfilled").length)
+        }
+      />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {completed === null ? "Add pictures to export them." : `${completed} exported`}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Batch export"
+        description="Exports many files with one format, quality and size. The host renders each file and decides where the results go; nothing is uploaded or saved by the panel."
+      >
+        <div data-live-demo="batch-panel" className="w-full">
+          <BatchPanelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

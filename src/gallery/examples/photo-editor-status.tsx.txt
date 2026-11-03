@@ -1,0 +1,87 @@
+import { type ReactNode, useEffect } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { ImageCanvas } from "glass-ux-image/canvas";
+import { ImageEditorProvider, useImageEditor, useSessionState } from "glass-ux-image/react";
+import type { EditorSession } from "glass-ux-image/session";
+import { PhotoEditorStatus } from "glass-ux-image/photo-editor";
+import { crop } from "glass-ux-image/tools/crop";
+import { develop } from "glass-ux-image/tools/develop";
+import { effects } from "glass-ux-image/tools/effects";
+import { brush } from "glass-ux-image/tools/retouch/brush";
+import { text } from "glass-ux-image/tools/text";
+
+const photo = `${import.meta.env.BASE_URL}sample.png`;
+const tools = [crop, develop, brush, text, effects];
+
+/** The sample photo in a contained stage, with a panel beside it as in an editor window. */
+function Stage({
+  editor,
+  canvas,
+  bar,
+  onReady,
+  children,
+}: {
+  editor: EditorSession;
+  canvas?: ReactNode;
+  bar?: ReactNode;
+  onReady?: (editor: EditorSession) => unknown;
+  children?: ReactNode;
+}) {
+  const { status } = useSessionState(editor);
+  const ready = status === "ready";
+  useEffect(() => {
+    // Seed once, when the photo opens: a fresh session has nothing to undo.
+    if (ready && onReady && !editor.state.canUndo) void onReady(editor);
+  }, [editor, ready, onReady]);
+  return (
+    <ImageEditorProvider editor={editor}>
+      <div className="flex h-120 w-full min-w-0 flex-col overflow-hidden rounded-surface border border-line">
+        {bar && (
+          <div className="flex min-h-12 items-center gap-2 border-b border-line px-3 py-2">
+            {ready && bar}
+          </div>
+        )}
+        <div className="flex min-h-0 flex-1">
+          <div className="relative min-w-0 flex-1">
+            {ready && canvas ? (
+              canvas
+            ) : (
+              <ImageCanvas aria-label="Sample photo" className="absolute inset-0" />
+            )}
+          </div>
+          {children && (
+            <div className="w-80 shrink-0 overflow-y-auto border-s border-line p-4">
+              {ready ? (
+                children
+              ) : (
+                <p role="status" className="type-caption text-fg-muted">
+                  Opening sample…
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </ImageEditorProvider>
+  );
+}
+
+function PhotoEditorStatusSample() {
+  const editor = useImageEditor({ source: photo, tools: [...tools] });
+  return <Stage editor={editor} bar={<PhotoEditorStatus />} />;
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Size and zoom"
+        description="For a window's status bar. It follows the canvas as it zooms."
+      >
+        <div data-live-demo="photo-editor-status" className="w-full">
+          <PhotoEditorStatusSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

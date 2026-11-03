@@ -1,0 +1,36 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import type { EncodeOptions } from "glass-ux-image/io";
+import { ExportPanel } from "glass-ux-image/panels/export";
+
+function ExportPanelSample() {
+  const [settings, setSettings] = useState<EncodeOptions>({
+    type: "image/webp",
+    quality: 0.82,
+    metadata: "strip",
+  });
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-3">
+      <ExportPanel value={settings} onValueChange={setSettings} />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {settings.type}, quality {Math.round((settings.quality ?? 1) * 100)}%, metadata{" "}
+        {settings.metadata ?? "preserve"}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Output settings"
+        description="Format, quality and metadata as one plain value, with no session. Formats the browser cannot encode are disabled."
+      >
+        <div data-live-demo="export-panel" className="w-full">
+          <ExportPanelSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

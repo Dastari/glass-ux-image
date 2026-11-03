@@ -1,0 +1,17 @@
+import { effects } from 'glass-ux-image/tools/effects';
+import type { EditorSession } from 'glass-ux-image/session';
+
+export const tools = [effects];
+
+// One undoable step, which onAction can see and refuse.
+export function addTwirl(editor: EditorSession) {
+  editor.run('effects.add', {
+    label: 'Twirl',
+    entry: {
+      id: 'twirl-1',
+      filter: 'twirl',
+      params: { amount: 0.7, radius: 150, wavelength: 40 },
+      strength: 0.8,
+    },
+  });
+}

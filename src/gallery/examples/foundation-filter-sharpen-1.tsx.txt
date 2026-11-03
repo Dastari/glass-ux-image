@@ -1,0 +1,10 @@
+import { sharpen } from 'glass-ux-image/filters/sharpen';
+import type { EditorSession } from 'glass-ux-image/session';
+
+// Pass in the session's filters: createEditorSession({ source, filters }).
+export const filters = [sharpen];
+
+// The recipe holds the parameters under the filter's id.
+export function crispen(editor: EditorSession) {
+  editor.run('edit.apply', { filters: { [sharpen.id]: { amount: 60 } } });
+}

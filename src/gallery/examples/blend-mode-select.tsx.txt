@@ -1,0 +1,31 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import type { BlendMode } from "glass-ux-image/core";
+import { BlendModeSelect } from "glass-ux-image/controls/blend-mode";
+
+function BlendModeSelectSample() {
+  const [mode, setMode] = useState<BlendMode>("multiply");
+  return (
+    <div className="flex w-full max-w-xs flex-col gap-3">
+      <BlendModeSelect value={mode} onValueChange={setMode} />
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        Blend mode: {mode}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Choose a blend mode"
+        description="All sixteen modes, blended in linear light. The value is the mode's id, ready to store in a layer."
+      >
+        <div data-live-demo="blend-mode-select" className="w-full">
+          <BlendModeSelectSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

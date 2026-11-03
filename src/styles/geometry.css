@@ -1,0 +1,56 @@
+/* Geometry domain styles. Joined after the base stylesheet at build time. */
+@layer components {
+ .gi-geometry-field { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-2); font-size:var(--type-label-size); }
+ .gi-geometry-field > :last-child { max-inline-size:10rem; }
+ /* A compact 3 × 3 well of anchor positions, like the canvas it describes. */
+ .gi-anchor { display:grid; grid-template-columns:repeat(3,var(--control-h-md)); grid-auto-rows:var(--control-h-md); gap:var(--space-1); inline-size:fit-content; padding:var(--space-1); border-radius:var(--radius-tile); background:var(--fill-muted); }
+ .gi-anchor button { inline-size:100%; block-size:100%; }
+ .gi-anchor [aria-checked=true] { color:var(--accent-text); }
+ /* logical:allow image-space overlays never mirror */
+ .gi-geometry-overlay { position:absolute; inset:0; inline-size:100%; block-size:100%; pointer-events:none; overflow:visible; }
+ .gi-horizon { pointer-events:auto; touch-action:none; }
+ .gi-geometry-grid { stroke:white; stroke-opacity:.65; pointer-events:none; }
+ .gi-horizon-line { stroke:white; stroke-width:2; pointer-events:none; }
+ .gi-transform-outline { fill:none; stroke:white; stroke-width:1.5; }
+ .gi-transform-handle { position:absolute; transform:translate(-50%,-50%); pointer-events:auto; touch-action:none; min-inline-size:var(--target-aa); min-block-size:var(--target-aa); }
+ .gi-move-box { position:absolute; border:1px solid white; pointer-events:auto; touch-action:none; cursor:move; }
+ .gi-move-box:focus-visible { outline:2px solid Highlight; outline-offset:3px; }
+ .gi-geometry-corners { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,5.5rem) minmax(0,5.5rem); align-items:center; gap:var(--space-2); min-inline-size:0; }
+ .gi-geometry-corners > .gi-geometry-coordinates { display:contents; }
+ .gi-panel-grid { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:var(--space-3); }
+}
+
+@layer components { .gi-crop-handle:focus-visible { outline:var(--focus-ring-width) solid var(--accent-ring); outline-offset:var(--focus-ring-offset); } 
+ /* Rotate: a protractor and measuring line over the picture. Picture space never mirrors.
+    White marks over a soft dark shade read on bright and dark pictures alike. */
+ /* logical:allow image-space overlays never mirror */
+ /* Marks sit on the picture, not on chrome: a bright form of the accent hue reads in both modes. */
+ .gi-rotate { position:absolute; inset:0; pointer-events:none; --gi-rotate-mark:oklch(.86 max(var(--accent-c), .12) var(--accent-h)); } /* tokens:allow picture-space mark colour */
+ .gi-rotate-surface { pointer-events:auto; touch-action:none; cursor:crosshair; }
+ .gi-rotate-surface path, .gi-rotate-surface circle { fill:none; }
+ .gi-rotate-shade { stroke:black; stroke-opacity:.35; stroke-width:3; } /* tokens:allow contrast shade under picture-space marks */
+ .gi-rotate-fine { stroke:white; stroke-opacity:.22; stroke-width:1; } /* tokens:allow picture-space marks */
+ .gi-rotate-thirds { stroke:white; stroke-opacity:.5; stroke-width:1; } /* tokens:allow picture-space marks */
+ .gi-rotate-grid .gi-rotate-shade { stroke-opacity:.18; stroke-width:2; }
+ .gi-rotate-ring { stroke:white; stroke-opacity:.75; stroke-width:1.5; } /* tokens:allow picture-space marks */
+ .gi-rotate-ticks { stroke:white; stroke-opacity:.85; stroke-width:1; } /* tokens:allow picture-space marks */
+ .gi-rotate-axis { stroke:white; stroke-opacity:.45; stroke-width:1; stroke-dasharray:4 4; } /* tokens:allow picture-space marks */
+ .gi-rotate-label { fill:white; font-size:var(--type-caption-size); font-variant-numeric:tabular-nums; text-anchor:middle; dominant-baseline:central; paint-order:stroke; stroke:black; stroke-opacity:.5; stroke-width:3; stroke-linejoin:round; } /* tokens:allow picture-space marks */
+ .gi-rotate-surface .gi-rotate-wedge { fill:var(--gi-rotate-mark); fill-opacity:.25; stroke:var(--gi-rotate-mark); stroke-width:1; }
+ .gi-rotate-needle { stroke:var(--gi-rotate-mark); stroke-width:2; stroke-linecap:round; }
+ .gi-rotate-surface .gi-rotate-hub { fill:var(--gi-rotate-mark); }
+ /* The ring is a wide, invisible grip: dragging anywhere on it turns the picture. */
+ .gi-rotate-grip { stroke:transparent; stroke-width:var(--target-aa); pointer-events:stroke; cursor:grab; }
+ .gi-rotate-knob, .gi-rotate-end { cursor:grab; outline:none; }
+ .gi-rotate-surface .gi-rotate-knob-target { fill:transparent; pointer-events:all; }
+ .gi-rotate-surface .gi-rotate-knob-face { fill:var(--gi-rotate-mark); stroke:white; stroke-width:2; } /* tokens:allow picture-space marks */
+ .gi-rotate-knob:focus-visible .gi-rotate-knob-face { stroke:Highlight; stroke-width:3; }
+ .gi-rotate-measure { stroke:var(--gi-rotate-mark); stroke-width:2; stroke-linecap:round; }
+ .gi-rotate-surface .gi-rotate-end-face { fill:white; stroke:var(--gi-rotate-mark); stroke-width:2; } /* tokens:allow picture-space marks */
+ /* Chips sit on the picture, so they use the on-media float glass with light text in both modes. */
+ .gi-rotate-chip { position:absolute; transform:translate(-50%,-50%); padding:var(--space-1) var(--space-2); border-radius:var(--radius-control); background:var(--glass-fill-float); backdrop-filter:blur(12px) saturate(1.4); box-shadow:inset 0 0 0 var(--border-width) oklch(100% 0 0 / .14), var(--shadow-2); color:white; font-size:var(--type-caption-size); font-weight:var(--weight-semibold); font-variant-numeric:tabular-nums; white-space:nowrap; pointer-events:none; } /* tokens:allow on-media text and rim */
+ .gi-rotate-chip-line { display:flex; align-items:center; gap:var(--space-2); transform:translate(-50%,var(--space-4)); pointer-events:auto; }
+ .gi-rotate-chip-name { opacity:.7; font-weight:var(--weight-regular); }
+ .gi-rotate-reading { display:flex; justify-content:space-between; margin:0; font-size:var(--type-label-size); }
+ .gi-rotate-reading output { font-variant-numeric:tabular-nums; }
+}

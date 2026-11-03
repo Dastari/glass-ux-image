@@ -1,0 +1,33 @@
+import { expect, it } from 'vitest';
+import { createPixels } from '../../core/pixels.js';
+import { pixelSource } from '../../core/tile-source.js';
+import { createEditorSession } from '../../session/index.js';
+import { retouchStage } from '../../retouch/stage.js';
+import type { Stroke } from '../../retouch/stroke.js';
+import { brush } from './brush.js';
+
+it('pixel preview bypasses actions and recipe state; a labelled stroke commits once and a veto can restore tiles', async () => {
+  const pixels = createPixels(64, 64); pixels.data.fill(1);
+  const actions: string[] = []; let veto = false;
+  const session = createEditorSession({ source: pixelSource(pixels), tools: [brush], onAction: (action, next) => { actions.push(action.id); if (!(veto && action.id === 'edit.commit')) return next(); } });
+  while (session.state.status === 'loading') await new Promise(resolve => setTimeout(resolve, 0));
+  const stroke: Stroke = { id: 'one', tool: 'brush', params: { size: 8, hardness: 1, colour: [0, 0, 0, 1] }, points: [{ x: 32.5, y: 32.5 }] };
+  let notifications = 0; session.subscribe(() => { notifications++; });
+  session.previewStrokes([stroke]); await retouchStage.preview(session, [stroke]);
+  expect(session.state.recipe.strokes).toEqual([]); expect(session.state.draft.strokes).toEqual([stroke]);
+  expect(notifications).toBe(0);
+  expect(actions).toEqual([]);
+  const read = async () => (await session.document!.layers[0]!.source.readTile({ level: 0, x: 0, y: 0 })).data[(32 * 64 + 32) * 4];
+  expect(await read()).toBe(0);
+  session.commit({ strokes: [stroke] }, { label: 'Brush' });
+  expect(actions).toEqual(['edit.commit']); expect(session.history.current.label).toBe('Brush');
+  session.undo(); await retouchStage.preview(session, []); expect(await read()).toBe(1);
+  veto = true;
+  await retouchStage.preview(session, [stroke]); expect(await read()).toBe(0);
+  session.commit({ strokes: [stroke] }, { label: 'Brush' }); session.revert();
+  await retouchStage.preview(session, []);
+  expect(await read()).toBe(1); expect(session.state.recipe.strokes).toEqual([]);
+  expect(actions.filter(id => id === 'edit.commit')).toHaveLength(2);
+  expect(session.history.nodes).toHaveLength(2);
+  session.dispose();
+});

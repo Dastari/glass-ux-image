@@ -1,0 +1,9 @@
+import { standard } from 'glass-ux-image/kits/standard';
+import { advanced } from 'glass-ux-image/kits/advanced';
+import { PhotoEditor } from 'glass-ux-image/photo-editor';
+
+const everything = [...standard, ...advanced];
+
+export function Editor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={everything} />;
+}

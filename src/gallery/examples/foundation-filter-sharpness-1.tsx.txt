@@ -1,0 +1,17 @@
+import { effects } from 'glass-ux-image/tools/effects';
+import type { EditorSession } from 'glass-ux-image/session';
+
+export const tools = [effects];
+
+// One undoable step, which onAction can see and refuse.
+export function addUnsharpMask(editor: EditorSession) {
+  editor.run('effects.add', {
+    label: 'Unsharp mask',
+    entry: {
+      id: 'unsharp-mask-1',
+      filter: 'unsharp-mask',
+      params: { amount: 1, radius: 2 },
+      strength: 0.8,
+    },
+  });
+}

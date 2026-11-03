@@ -1,0 +1,6 @@
+import { canvasSize } from "glass-ux-image/tools/canvas-size";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function CanvasSizeEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[canvasSize]} />;
+}

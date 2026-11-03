@@ -1,0 +1,10 @@
+import { develop } from 'glass-ux-image/filters/develop';
+import type { EditorSession } from 'glass-ux-image/session';
+
+// Pass in the session's filters: createEditorSession({ source, filters }).
+export const filters = [develop];
+
+// The recipe holds the parameters under the filter's id.
+export function openShadows(editor: EditorSession) {
+  editor.run('edit.apply', { filters: { [develop.id]: { exposure: 0.3, highlights: -40, shadows: 45, temperature: 15 } } });
+}

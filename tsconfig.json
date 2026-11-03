@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
+    ],
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": [],
+    "resolveJsonModule": true,
+    "paths": {
+      "glass-ux-image/*": [
+        "./src/*",
+        "./src/*/index.ts",
+        "./src/*/index.tsx"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/gallery/demos"
+  ]
+}

@@ -1,0 +1,6 @@
+import { effects } from "glass-ux-image/tools/effects";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function EffectsEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[effects]} />;
+}

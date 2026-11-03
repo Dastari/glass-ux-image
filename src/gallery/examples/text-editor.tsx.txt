@@ -1,0 +1,56 @@
+import { useState } from "react";
+import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
+import { TextEditor, defaultTextSpec } from "glass-ux-image/tools/text";
+
+const photo = `${import.meta.env.BASE_URL}sample.png`;
+
+function TextEditorSample() {
+  const [value, setValue] = useState({
+    ...defaultTextSpec,
+    content: "Lake at dusk",
+    fontSize: 32,
+    lineHeight: 40,
+  });
+  const [status, setStatus] = useState("Editing");
+  return (
+    <div className="flex w-full max-w-xl flex-col gap-3">
+      <div className="relative overflow-hidden rounded-surface border border-line">
+        <img
+          src={photo}
+          alt="A mountain lake at dusk, with snow on the far ridge and pines in the foreground"
+          draggable={false}
+          className="block aspect-3/2 w-full select-none"
+        />
+        <div className="absolute start-4 top-4">
+          <TextEditor
+            key={value.content}
+            value={value}
+            onCommit={(next) => {
+              setValue(next);
+              setStatus(`Committed: ${next.content}`);
+            }}
+            onCancel={() => setStatus("Cancelled")}
+          />
+        </div>
+      </div>
+      <output aria-live="polite" className="type-caption text-fg-muted">
+        {status}
+      </output>
+    </div>
+  );
+}
+
+export default function Section() {
+  return (
+    <SectionPage>
+      <Specimen
+        title="Edit in place"
+        description="A text box that keeps the browser's own input methods, so composed languages work. Enter adds a line, Ctrl or Command and Enter finishes, and Escape cancels."
+      >
+        <div data-live-demo="text-editor" className="w-full">
+          <TextEditorSample />
+        </div>
+      </Specimen>
+    </SectionPage>
+  );
+}

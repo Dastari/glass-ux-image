@@ -1,0 +1,11 @@
+/* Layers and text parts. Spatial transforms use physical image coordinates intentionally. */
+.gi-layers-panel { display: grid; gap: var(--space-3); min-inline-size: 0; }
+/* The list keeps one box whether it holds layers or the empty state (R9.1). */
+.gi-layers-list { block-size: 11rem; min-block-size: 5rem; display: grid; min-inline-size: 0; }
+.gi-layers-list > .fa-tree, .gi-layers-list > .fa-empty { block-size: 100%; min-block-size: 0; }
+.gi-layers-panel > .fa-toolbar { margin-inline: calc(var(--space-1) * -1); }
+.gi-layers-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--gap-controls); }
+.gi-text-overlay { position: absolute; inset: 0; pointer-events: auto; }
+.gi-text-edit-wrap { max-inline-size: none; }
+.gi-text-edit-wrap textarea { min-block-size: 2lh; max-block-size: 12lh; }
+.gi-text-place { position: absolute; inset-inline-start: var(--space-2); inset-block-start: var(--space-2); }

@@ -1,0 +1,462 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "glass-ux/styles.css";
+@import "glass-ux-docs-kit/styles.css";
+@import "glass-ux-image/styles.css";
+/* Tailwind scans these for class names: the library, the page shell, your components and this site. */
+@source "../../../node_modules/glass-ux/dist";
+@source "../../../node_modules/glass-ux-docs-kit/react";
+@source "../../../src";
+@source "./";
+@layer components {
+  :root[data-style="flat"] .docs-mobile-header {
+    padding-inline: var(--space-2);
+  }
+  :root[data-style="flat"] .docs-layout {
+    --gallery-shell-gutter: 0px;
+  }
+  :root[data-style="flat"] .docs-header {
+    border-block-end: var(--divider);
+  }
+  /* The SidebarProvider: the directory and the page in one row. The page keeps the gutter on
+     its other sides; beside an open floating sidebar, the pane's own margin is the gap. */
+  .docs-layout {
+    --gallery-shell-gutter: var(--gap-panels);
+    display: flex;
+    height: 100dvh;
+    gap: 0;
+    padding: 0;
+  }
+  .docs-main {
+    flex: 1 1 0;
+    padding: var(--gallery-shell-gutter);
+    padding-top: max(var(--gallery-shell-gutter), var(--safe-top));
+  }
+  .docs-sidebar[data-state="expanded"]:not([data-mobile]) ~ .docs-main {
+    padding-inline-start: 0;
+  }
+  .docs-header > .docs-sidebar-trigger {
+    margin-inline-end: auto;
+  }
+  .docs-content {
+    position: relative;
+  }
+  .docs-index {
+    padding: var(--inset-panel);
+  }
+  /* A route loading its code: the document column's opening, where the page will be. */
+  .docs-route-loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-section);
+    width: 100%;
+    max-width: 64rem;
+    min-height: 100%;
+    margin-inline: auto;
+    padding: var(--inset-panel);
+  }
+  .docs-route-loading-block {
+    width: 100%;
+    height: calc(var(--unit) * 80);
+  }
+  .docs-main {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .docs-content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  .docs-header {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  /* The popover is for a fine pointer: the controls keep their own heights, not the phone
+     sheet's 44px targets. */
+  .fa-popover.docs-appearance-popover {
+    --_w: 30rem;
+  }
+  .docs-appearance-popover .docs-toolbar[data-expanded] {
+    gap: var(--space-3);
+  }
+  .docs-appearance-popover .docs-appearance-control {
+    gap: var(--space-1-5);
+  }
+  .docs-appearance-popover .docs-appearance-options > .fa-btn,
+  .docs-appearance-popover .docs-appearance-control .fa-swatch-picker-item {
+    min-width: 0;
+    min-height: 0;
+  }
+  .docs-appearance-popover .docs-appearance-control .fa-swatch-picker {
+    gap: var(--space-half);
+  }
+  .docs-repository-link {
+    width: var(--control-h-sm);
+    padding-inline: 0;
+    gap: 0;
+  }
+  .docs-repository-link .fa-btn-label {
+    display: none;
+  }
+  .docs-directory {
+    gap: var(--space-3);
+  }
+  .docs-directory-empty {
+    padding-inline: var(--space-2);
+  }
+  /* The interface language sits under the sidebar's links, across its width. */
+  .docs-language {
+    padding-block-start: var(--space-1);
+  }
+  .docs-language-select {
+    width: 100%;
+  }
+  .docs-toolbar[data-expanded] {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-6);
+    overflow: visible;
+    min-width: 0;
+  }
+  .docs-appearance-control {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-controls);
+    min-width: 0;
+  }
+  .docs-appearance-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-controls);
+    min-width: 0;
+    max-width: 100%;
+  }
+  .docs-appearance-options > .fa-btn,
+  .docs-mobile-header .fa-btn,
+  .docs-mobile-dialog .fa-dialog-close {
+    min-width: 2.75rem;
+    min-height: max(2.75rem, var(--control-h-md));
+  }
+  .docs-appearance-control .fa-swatch-picker {
+    flex-wrap: wrap;
+    width: fit-content;
+    max-width: 100%;
+    gap: var(--space-1);
+  }
+  .docs-appearance-control .fa-swatch-picker-item {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+  .docs-mobile-dialog .fa-dialog-body:last-child {
+    padding-block-end: max(
+      var(--inset-dialog),
+      calc(var(--safe-bottom) + var(--space-3))
+    );
+  }
+  @media (width < 48rem) {
+    .docs-layout {
+      --gallery-shell-gutter: var(--space-2);
+      flex-direction: column;
+      padding: max(var(--space-2), var(--safe-top))
+        max(var(--space-2), var(--safe-right)) var(--space-2)
+        max(var(--space-2), var(--safe-left));
+    }
+    .docs-main {
+      gap: 0;
+      padding: 0;
+    }
+    .docs-mobile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap-controls);
+      min-width: 0;
+      padding-block: var(--space-1) var(--space-2);
+      border-block-end: var(--border-width) solid var(--line);
+    }
+    .docs-mobile-header .gallery-brand {
+      gap: var(--space-2);
+      padding: 0;
+      min-width: 0;
+    }
+    .docs-mobile-header .gallery-brand-mark {
+      width: var(--space-6);
+      height: var(--space-6);
+      flex: none;
+    }
+    .docs-mobile-header .gallery-brand-name {
+      white-space: nowrap;
+      font-size: var(--type-body-size);
+      font-weight: var(--weight-medium);
+    }
+    .docs-mobile-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      flex: none;
+    }
+    .docs-mobile-action-label {
+      display: none;
+    }
+    .docs-mobile-actions .fa-btn {
+      padding-inline: var(--space-2);
+    }
+    .docs-content {
+      overscroll-behavior: contain;
+      padding-block-end: var(--safe-bottom);
+    }
+  }
+  @media (40rem <= width < 48rem) {
+    .docs-mobile-action-label {
+      display: inline;
+    }
+  }
+  @media (width < 40rem) {
+    .docs-mobile-actions .fa-btn {
+      width: max(2.75rem, var(--control-h-md));
+      padding-inline: 0;
+      gap: 0;
+    }
+    .docs-mobile-actions .fa-btn-label {
+      display: none;
+    }
+  }
+}
+
+/* Print: the documentation as one long document (the library's print layer does the rest). */
+@media print {
+  .docs-layout {
+    display: block;
+    height: auto;
+    padding: 0;
+  }
+  .docs-main {
+    padding: 0;
+  }
+  .docs-content {
+    overflow: visible;
+  }
+  .docs-header {
+    display: none;
+  }
+}
+@source "../../demo/src/templates";
+@source "../../demo/src/workspace-page.tsx";
+@layer components {
+  /* Component demos on catalogue pages. */
+  .image-docs-example {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: var(--target-min);
+  }
+  .image-docs-session {
+    inline-size: 100%;
+  }
+  .image-docs-stage {
+    position: relative;
+    block-size: 20rem;
+    inline-size: 100%;
+    isolation: isolate;
+    border-radius: var(--radius-surface);
+    overflow: hidden;
+  }
+  .image-docs-editor {
+    block-size: 42rem;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+  .image-docs-editor > *,
+  .image-docs-stage > .gi-canvas {
+    block-size: 100%;
+  }
+  .image-docs-cursor {
+    position: relative;
+    block-size: 10rem;
+    background: var(--canvas);
+    border-radius: var(--radius-control);
+  }
+  .image-docs-text {
+    position: relative;
+    min-block-size: 12rem;
+  }
+
+  /* The landing page: the Glass UX showcase's measure and hero, then the editor as its application demo. */
+  .image-home {
+    --image-home-measure: 80rem;
+    inline-size: 100%;
+    max-inline-size: var(--image-home-measure);
+    margin-inline: auto;
+    padding: var(--space-6) var(--space-6) var(--space-12);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+  .image-home-hero {
+    padding-block: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .image-home-hero h1 {
+    font-family: var(--font-display);
+    font-size: var(--type-display-size);
+    font-weight: 600;
+    letter-spacing: var(--type-display-tracking);
+    line-height: var(--type-display-line);
+  }
+  .image-home-hero > p {
+    font-size: var(--type-body-size);
+    line-height: 1.6;
+    color: var(--fg-muted);
+    max-inline-size: 42rem;
+  }
+  .image-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .image-home-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-inline-size: 0;
+  }
+  .image-home-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--gap-panels);
+  }
+  .image-home-heading > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .image-home-heading h2 {
+    font-family: var(--font-display);
+    font-size: var(--type-title-size);
+    line-height: 1.2;
+    letter-spacing: var(--type-title-tracking);
+    font-weight: 600;
+  }
+  .image-home-heading p {
+    font-size: var(--type-body-size);
+    line-height: 1.6;
+    max-inline-size: 44rem;
+  }
+  /* A bounded box on the canvas, like a Glass UX template stage: the editor's panels are its only material. */
+  .image-home-app {
+    block-size: min(52rem, 85dvh);
+    min-inline-size: 0;
+    display: grid;
+  }
+  .image-home-app > .workspace-host {
+    min-block-size: 0;
+  }
+
+  /* Template pages: the Glass UX template document. */
+  .image-docs-template-document {
+    --gallery-document-measure: 96rem;
+  }
+  .image-docs-template-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+  .image-docs-template-stage {
+    block-size: min(52rem, 85dvh);
+    min-inline-size: 0;
+    display: grid;
+    border-radius: var(--radius-surface);
+    box-shadow: inset 0 0 0 var(--border-width) var(--line);
+    padding: var(--space-4);
+  }
+  .image-docs-template-stage[data-template="single-adjustment"] {
+    block-size: auto;
+    min-block-size: 16rem;
+    place-items: center;
+  }
+  .image-docs-template-stage > * {
+    min-inline-size: 0;
+    min-block-size: 0;
+  }
+  .image-docs-template-source {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  /* A template alone in the window. */
+  .image-docs-preview {
+    block-size: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .image-docs-preview-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .image-docs-preview-title {
+    margin-inline-end: auto;
+  }
+  .image-docs-preview-screen {
+    min-block-size: 0;
+    display: grid;
+  }
+  .image-docs-preview-screen[data-template="single-adjustment"] {
+    place-items: center;
+  }
+}
+
+@layer components {
+  /* The toolbar takes the header's free width, not its content's, so folded controls unfold
+     when the window grows (fa-fit-row). Below the width of every control folded, the
+     toolbar gives way to one Appearance button whose popover holds the same controls. */
+  .docs-header-appearance {
+    container-type: inline-size;
+    display: flex;
+    flex: 1 1 0;
+    justify-content: flex-end;
+    align-items: center;
+    min-width: 0;
+  }
+  .docs-header .docs-toolbar {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+  .docs-header-appearance > .docs-appearance-button {
+    display: none;
+  }
+  @container (width < 38.5rem) {
+    .docs-header .docs-toolbar {
+      display: none;
+    }
+    .docs-header-appearance > .docs-appearance-button {
+      display: inline-flex;
+    }
+  }
+  .docs-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--gap-controls);
+  }
+  /* The background select gives way last, truncating its value. */
+  .docs-background-select {
+    width: 7rem;
+    min-width: 5.5rem;
+  }
+}
