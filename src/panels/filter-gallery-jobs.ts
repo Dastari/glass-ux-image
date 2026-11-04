@@ -12,6 +12,8 @@ export interface ThumbnailResult {
 interface Job {
     id: number;
     source: PixelBuffer;
+    /** Resample the source to this size in the worker first, as `sampleThumbnail` does. */
+    size?: { width: number; height: number };
     entries: readonly EffectEntry[];
     scale: number;
     signal: AbortSignal;
@@ -19,6 +21,9 @@ interface Job {
     reject: (error: Error) => void;
 }
 let worker: Worker | undefined, active: Job | undefined, nextId = 0, users = 0;
+// Every thumbnail of one gallery shares its source. The worker keeps recent sources by id, so each picture is
+// cloned across once, not once per thumbnail: 39 copies of a 240 × 160 float picture were 24 MB of main-thread work.
+let sourceIds = new WeakMap<PixelBuffer, number>(), nextSource = 0;
 const queue: Job[] = [];
 const cancelled = () => new Error('Thumbnail cancelled');
 function pump() {
@@ -35,7 +40,11 @@ function pump() {
             worker = new Worker(new URL('./filter-gallery-worker.js', import.meta.url), { type: 'module' });
             worker.onmessage = (event: MessageEvent<ThumbnailResult & {
                 error?: boolean;
-            }>) => { const job = active; active = undefined; if (job) {
+                missing?: boolean;
+            }>) => { const job = active; active = undefined; if (job && event.data.missing && !job.signal.aborted) {
+                sourceIds.delete(job.source);
+                queue.unshift(job);
+            } else if (job) {
                 if (job.signal.aborted)
                     job.reject(cancelled());
                 else if (event.data.error)
@@ -43,9 +52,12 @@ function pump() {
                 else
                     job.resolve(event.data);
             } pump(); };
-            worker.onerror = () => { const job = active; active = undefined; worker?.terminate(); worker = undefined; job?.reject(new Error('Thumbnail worker failed')); pump(); };
+            worker.onerror = () => { const job = active; active = undefined; worker?.terminate(); worker = undefined; sourceIds = new WeakMap(); job?.reject(new Error('Thumbnail worker failed')); pump(); };
         }
-        worker.postMessage({ id: job.id, source: job.source, params: { entries: job.entries }, scale: job.scale });
+        let sourceId = sourceIds.get(job.source);
+        const first = sourceId === undefined;
+        if (first) sourceIds.set(job.source, (sourceId = nextSource++));
+        worker.postMessage({ id: job.id, sourceId, ...(first ? { source: job.source } : {}), ...(job.size ? { size: job.size } : {}), params: { entries: job.entries }, scale: job.scale });
         return;
     }
 }
@@ -53,18 +65,24 @@ function pump() {
 export function acquireThumbnails() { users++; return () => { if (--users === 0) {
     worker?.terminate();
     worker = undefined;
+    sourceIds = new WeakMap();
     active?.reject(cancelled());
     active = undefined;
     for (const job of queue.splice(0))
         job.reject(cancelled());
 } }; }
-export function renderThumbnail(source: PixelBuffer, entries: readonly EffectEntry[], scale: number, signal: AbortSignal): Promise<ThumbnailResult> {
+/**
+ * Render one thumbnail in the shared worker. With `size`, the worker first resamples `source` to it, as
+ * `sampleThumbnail` does, so the page never resamples: each source crosses once however many thumbnails use it.
+ */
+export function renderThumbnail(source: PixelBuffer, entries: readonly EffectEntry[], scale: number, signal: AbortSignal, size?: { width: number; height: number }): Promise<ThumbnailResult> {
     return new Promise((resolve, reject) => {
         const onAbort = () => {
             if (active === job) {
                 // The worker cannot be interrupted, and a silent one would block every later job.
                 worker?.terminate();
                 worker = undefined;
+                sourceIds = new WeakMap();
                 active = undefined;
                 job.reject(cancelled());
                 pump();
@@ -78,7 +96,7 @@ export function renderThumbnail(source: PixelBuffer, entries: readonly EffectEnt
         };
         const settle = () => signal.removeEventListener('abort', onAbort);
         const job: Job = {
-            id: nextId++, source, entries, scale, signal,
+            id: nextId++, source, entries, scale, signal, ...(size ? { size } : {}),
             resolve: (value) => { settle(); resolve(value); },
             reject: (error) => { settle(); reject(error); },
         };
@@ -93,6 +111,11 @@ export interface ThumbnailSample {
     pixels: PixelBuffer;
     /** Width of the cut in source pixels, to turn effect sizes into thumbnail pixels. */
     sourceWidth: number;
+}
+/** The width of the centre cut `sampleThumbnail` takes, in source pixels, without touching pixels. */
+export function thumbnailCutWidth(sourceWidth: number, sourceHeight: number, width: number, height: number): number {
+    const aspect = width / height;
+    return sourceWidth / sourceHeight > aspect ? sourceHeight * aspect : sourceWidth;
 }
 /**
  * The centre of `source` at the thumbnail's aspect ratio (as `object-fit: cover` would show it),
@@ -129,10 +152,9 @@ export function sampleThumbnail(source: PixelBuffer, width: number, height: numb
             else {
                 const fx = Math.max(0, Math.min(source.width - 1, (x0 + x1) / 2 - .5)), fy = Math.max(0, Math.min(source.height - 1, (y0 + y1) / 2 - .5));
                 const ax = Math.floor(fx), ay = Math.floor(fy), bx = Math.min(source.width - 1, ax + 1), by = Math.min(source.height - 1, ay + 1), tx = fx - ax, ty = fy - ay;
-                for (let c = 0; c < 4; c++) {
-                    const at = (px: number, py: number) => source.data[(py * source.width + px) * 4 + c]!;
-                    out[o + c] = (at(ax, ay) * (1 - tx) + at(bx, ay) * tx) * (1 - ty) + (at(ax, by) * (1 - tx) + at(bx, by) * tx) * ty;
-                }
+                const d = source.data, i00 = (ay * source.width + ax) * 4, i10 = (ay * source.width + bx) * 4, i01 = (by * source.width + ax) * 4, i11 = (by * source.width + bx) * 4;
+                for (let c = 0; c < 4; c++)
+                    out[o + c] = (d[i00 + c]! * (1 - tx) + d[i10 + c]! * tx) * (1 - ty) + (d[i01 + c]! * (1 - tx) + d[i11 + c]! * tx) * ty;
             }
         }
     }

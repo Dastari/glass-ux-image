@@ -103,7 +103,9 @@ for(const kit of ['basic','standard','advanced'])test(`PhotoEditor accepts ${kit
   await page.goto(`/?view=editor&kit=${kit}`);await expect(page.locator('.gi-photo-stage canvas')).toHaveCount(1);
   await page.getByLabel('Open an image').setInputFiles('apps/demo/src/assets/sample.png');
   await expect(page.locator('.gi-photo-foot')).toContainText('1,500 × 1,000');
-  await expect.poll(async()=>(await page.locator('.gi-stage-surface canvas').screenshot()).byteLength).toBeGreaterThan(15000);
+  // A readiness wait, not a speed check: SwiftShader's first paint takes about 4 s at a 4x slower CPU, the same
+  // before and after 0.1.0's changes, which left a hosted runner too close to the default 5 s.
+  await expect.poll(async()=>(await page.locator('.gi-stage-surface canvas').screenshot()).byteLength,{timeout:20_000}).toBeGreaterThan(15000);
   const radios=page.locator('.gi-photo-side').getByRole('radiogroup',{name:'Tools',exact:true}).getByRole('radio');await expect(radios).toHaveCount(kit==='basic'?4:kit==='standard'?12:17);
   await radios.last().click();await expect(radios.last()).toBeChecked();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

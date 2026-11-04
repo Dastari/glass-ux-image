@@ -585,7 +585,7 @@ export class EditorSession {
     let pixels=await this.#previewPixels(backend,document,level,signal);
     while(Math.max(pixels.width,pixels.height)>maxEdge){signal.throwIfAborted();pixels=halve(pixels);await new Promise<void>(resolve=>setTimeout(resolve));}
     return pixels;
-    } finally { document.dispose(); }
+    } finally { document.dispose(); backend.dispose(); }
   }
 
   /** The turned picture's size, which a crop is measured against. */

@@ -6,7 +6,7 @@ import { useMessages } from 'glass-ux/i18n';
 import type { PixelBuffer } from '../core/pixels.js';
 import type { EffectEntry } from '../filters/effects/catalogue.js';
 import { effectsMessages } from '../messages/effects.js';
-import { acquireThumbnails, renderThumbnail, sampleThumbnail } from './filter-gallery-jobs.js';
+import { acquireThumbnails, renderThumbnail, thumbnailCutWidth } from './filter-gallery-jobs.js';
 /** Thumbnail pixels: a 3:2 tile about 120 CSS pixels wide, sharp at twice the pixel density. */
 const THUMB_WIDTH = 240, THUMB_HEIGHT = 160;
 /** A host-labelled thumbnail candidate, independent of session or editor state. */
@@ -63,12 +63,13 @@ export function FilterGallery({ items, source, scale = 1, detailScale = 1, docum
                 const original = typeof source === 'function' ? await source() : source;
                 if (controller.signal.aborted)
                     return;
-                const { pixels, sourceWidth } = sampleThumbnail(original, THUMB_WIDTH, THUMB_HEIGHT);
+                // The worker resamples; the page only needs the cut's width for the scale.
+                const sourceWidth = thumbnailCutWidth(original.width, original.height, THUMB_WIDTH, THUMB_HEIGHT), size = { width: THUMB_WIDTH, height: THUMB_HEIGHT };
                 // Thumbnail pixels per document pixel for a faithful miniature, raised to the detail scale.
                 const faithful = THUMB_WIDTH / (documentWidth ? sourceWidth * documentWidth / original.width : sourceWidth / scale);
                 const effectScale = Math.max(faithful, detailScale);
                 const pictures = await Promise.all(items.map(async (item) => {
-                    const result = await renderThumbnail(pixels, item.effects, effectScale, controller.signal);
+                    const result = await renderThumbnail(original, item.effects, effectScale, controller.signal, size);
                     if (controller.signal.aborted)
                         return null;
                     const url = URL.createObjectURL(result.blob);
@@ -91,7 +92,7 @@ export function FilterGallery({ items, source, scale = 1, detailScale = 1, docum
     }, [source, items, scale, detailScale, documentWidth]);
     return <div className={className}>
  <RadioGroup className="gi-filter-gallery" variant="cards" aria-label={name ?? messages.gallery} disabled={disabled} value={(value === undefined ? selected : value) ?? ''} onValueChange={id => { if (!id) return; if (value === undefined) setSelected(id); onValueChange?.(id); }}>
- {items.map(item => <RadioCard key={item.id} className="gi-filter-choice" value={item.id} onClick={() => { if ((value === undefined ? selected : value) === item.id) onValueChange?.(item.id); }} title={item.label} icon={<span className="gi-filter-thumb">{pictures[item.id] ? <img src={pictures[item.id]} alt="" width={THUMB_WIDTH / 2} height={THUMB_HEIGHT / 2}/> : <Skeleton.Block width="100%" height="100%"/>}</span>}/>)}
+ {items.map(item => <RadioCard key={item.id} className="gi-filter-choice" value={item.id} onClick={() => { if ((value === undefined ? selected : value) === item.id) onValueChange?.(item.id); }} title={item.label} icon={<span className="gi-filter-thumb">{pictures[item.id] ? <img src={pictures[item.id]} alt="" decoding="async" width={THUMB_WIDTH / 2} height={THUMB_HEIGHT / 2}/> : <Skeleton.Block width="100%" height="100%"/>}</span>}/>)}
  </RadioGroup>
  <div className="gi-feedback" role="status"><Notice role="none" tone="danger" style={{visibility: failed ? undefined : 'hidden'}}>{messages.previewFailed}</Notice></div>
  </div>;
