@@ -2,7 +2,7 @@ import { abortable, retryRead } from "../core/async.js";
 import { TILE_SIZE, type PixelBuffer } from '../core/pixels.js';
 import { tileKey, tileRect, tilesInRect, coarsestLevel, type Rect, type TileAddress } from '../core/pyramid.js';
 import type { TileSource } from '../core/tile-source.js';
-import { applyDab, DabWorkspace, findSpotSource, type DabSurface } from './kernels.js';
+import { applyDabSteps, DabWorkspace, findSpotSource, type DabSurface } from './kernels.js';
 import { dabRect, strokeDabs, type Stroke } from './stroke.js';
 
 class StaleRetouchRead extends Error {}
@@ -26,10 +26,16 @@ const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.width && a.y < b.y + b.heig
 const same = (a: Stroke, b: Stroke) => a === b || JSON.stringify(a) === JSON.stringify(b);
 const prefix = (a: readonly Stroke[], b: readonly Stroke[]) => a.length <= b.length && a.every((s, i) => same(s, b[i]!));
 
+/** Which strokes a store replays: the base picture's, or one layer's pixels or mask. */
+export interface StrokeTarget {
+  /** Layer id; absent for the base picture. */ layer?: string;
+  /** The layer's mask rather than its pixels. */ mask?: boolean;
+}
 /** Cumulative CPU work, useful for replay and dirty-region proofs. */
 export interface StrokeStoreStats {
   /** Number of pixel dab applications, including replay. */ dabApplications: number;
   /** Number of full or partial mip tile rebuilds. */ downsampledTiles: number;
+  /** Times a single dab paused part-way to keep within the budget. */ dabPauses: number;
 }
 
 /**
@@ -46,7 +52,7 @@ export class StrokeStore implements TileSource {
   /** Source height in pixels. */
   readonly height: number;
   /** Cumulative work counters for tests and host diagnostics. */
-  readonly stats: StrokeStoreStats = { dabApplications: 0, downsampledTiles: 0 };
+  readonly stats: StrokeStoreStats = { dabApplications: 0, downsampledTiles: 0, dabPauses: 0 };
   private tiles: Tiles = new Map();
   private snapshots: Snapshot[] = [];
   private strokes: readonly Stroke[] = [];
@@ -65,7 +71,7 @@ export class StrokeStore implements TileSource {
   private mipDeadline = 0;
   private revision = 0;
   /** Wrap an immutable base with sparse editable tiles. */
-  constructor(/** Immutable decoded input. */ readonly base: TileSource, private options: StrokeStoreOptions = {}) {
+  constructor(/** Immutable decoded input. */ readonly base: TileSource, private options: StrokeStoreOptions = {}, /** Strokes this store accepts. */ readonly target: StrokeTarget = {}) {
     this.width = base.width; this.height = base.height;
     this.maxBytes = options.maxBytes ?? 64 * 1024 * 1024;
     if (!(this.maxBytes >= 0)) throw new RangeError('Invalid tile memory limit');
@@ -101,7 +107,7 @@ export class StrokeStore implements TileSource {
   }
   /** An independent read branch sharing immutable COW snapshots, never reconciling the live store. */
   fork(strokes: readonly Stroke[]): StrokeStore {
-    const branch = new StrokeStore(this.base, this.options);
+    const branch = new StrokeStore(this.base, this.options, this.target);
     branch.stageMode = true;
     const owned = strokes.map(stroke => {
       let copy = this.ownedStrokes.get(stroke);
@@ -171,7 +177,7 @@ export class StrokeStore implements TileSource {
     let deadline = performance.now() + 8;
     for (let n = start.strokes.length; n < next.length; n++) {
       const stroke = next[n]!;
-      if (stroke.layer !== undefined) throw new RangeError('Route layer strokes to that layer’s StrokeStore');
+      if (stroke.layer !== this.target.layer || Boolean(stroke.mask) !== Boolean(this.target.mask)) throw new RangeError('Route layer and mask strokes to their own StrokeStore');
       working = new Map(working);
       const copied = new Set<string>();
       let dabIndex = 0;
@@ -194,7 +200,14 @@ export class StrokeStore implements TileSource {
           const sy = Math.max(0, Math.min(this.height - 1, Math.floor(halo.y + offset.y)));
           sampled = await this.region({ x: sx, y: sy, width: Math.max(1, Math.min(this.width, Math.ceil(halo.x + halo.width + offset.x)) - sx), height: Math.max(1, Math.min(this.height, Math.ceil(halo.y + halo.height + offset.y)) - sy) }, working, true);
         }
-        applyDab(surface, stroke.tool, stroke.params, dab, this.workspace, sampled, offset);
+        // A large dab pauses part-way within the same budget, so it never holds a frame.
+        const steps = applyDabSteps(surface, stroke.tool, stroke.params, dab, this.workspace, sampled, offset);
+        while (!steps.next().done) {
+          if (performance.now() < deadline) continue;
+          this.stats.dabPauses++;
+          await (this.options.yield?.() ?? new Promise<void>(resolve => setTimeout(resolve, 0)));
+          deadline = performance.now() + 8;
+        }
         this.stats.dabApplications++;
         for (const address of tilesInRect(this, 0, changed)) {
           const key = tileKey(address), tr = tileRect(this, address);
@@ -318,34 +331,74 @@ export class StrokeStore implements TileSource {
   }
 }
 
-/** SourceStage shape, without importing the session or React. Caches are scoped to session and base identity. */
+const RETOUCH_TOOLS = new Set(['brush', 'eraser', 'clone', 'heal', 'spot-heal', 'patch', 'blur', 'sharpen', 'smudge', 'dodge', 'burn', 'sponge', 'colour-replace', 'red-eye']);
+/** The strokes one store replays, in order. */
+export function strokesFor(strokes: readonly Stroke[], target: StrokeTarget): Stroke[] {
+  return strokes.filter(stroke => stroke.layer === target.layer && Boolean(stroke.mask) === Boolean(target.mask) && RETOUCH_TOOLS.has(stroke.tool));
+}
+interface LiveStore { store: StrokeStore; target: StrokeTarget }
+const keyOf = (target: StrokeTarget) => target.layer === undefined ? '' : `${target.layer}${target.mask ? '#mask' : ''}`;
+
+/**
+ * SourceStage shape, without importing the session or React. Caches are scoped to session and base
+ * identity. The base picture, each layer's pixels and each layer's mask have their own store.
+ */
 export function createRetouchStage(options: StrokeStoreOptions = {}) {
-  const owners = new WeakMap<object, WeakMap<TileSource, StrokeStore>>();
+  const owners = new WeakMap<object, WeakMap<TileSource, Map<string, StrokeStore>>>();
   const standalone = {};
-  const sessions = new WeakMap<object, StrokeStore>();
+  const sessions = new WeakMap<object, Map<string, LiveStore>>();
+  const ownerOf = (session: unknown) => session && typeof session === 'object' ? session : standalone;
+  const existing = (owner: object, base: TileSource, target: StrokeTarget) => owners.get(owner)?.get(base)?.get(keyOf(target));
+  const storeFor = (owner: object, base: TileSource, target: StrokeTarget) => {
+    let stores = owners.get(owner);
+    if (!stores) { stores = new WeakMap(); owners.set(owner, stores); }
+    let byTarget = stores.get(base);
+    if (!byTarget) { byTarget = new Map(); stores.set(base, byTarget); }
+    let store = byTarget.get(keyOf(target));
+    if (!store) { store = new StrokeStore(base, options, target); byTarget.set(keyOf(target), store); }
+    return store;
+  };
+  const live = (session: unknown, target: StrokeTarget, store: StrokeStore) => {
+    if (!session || typeof session !== 'object') return;
+    let stores = sessions.get(session);
+    if (!stores) { stores = new Map(); sessions.set(session, stores); }
+    stores.set(keyOf(target), { store, target });
+  };
   return {
     id: 'retouch',
     /** Release all live/history stores owned by a session. */
     release(session: object) { owners.delete(session); sessions.delete(session); },
     /** Apply ephemeral pixel previews directly to tiles, without publishing recipe state each frame. */
     preview(session: object, strokes: readonly Stroke[]): Promise<Rect[]> {
-      const store = sessions.get(session);
-      if (!store) return Promise.reject(new Error('Register the retouch stage before previewing'));
-      return store.reconcile(strokes);
+      const stores = sessions.get(session);
+      if (!stores?.has('')) return Promise.reject(new Error('Register the retouch stage before previewing'));
+      return Promise.all([...stores.values()].map(({ store, target }) => store.reconcile(strokesFor(strokes, target)))).then(rects => rects.flat());
     },
-    apply(base: TileSource, recipe: { strokes?: readonly unknown[] }, _session?: unknown, context?: {isolated?: boolean}): TileSource {
-      const owner = _session && typeof _session === "object" ? _session : standalone;
-      let stores=owners.get(owner);
-      if(!stores) {stores=new WeakMap();owners.set(owner,stores);}
-      let store = stores.get(base);
-      if (!store) { store = new StrokeStore(base, options); stores.set(base, store); }
-      if (!context?.isolated && _session && typeof _session === 'object') sessions.set(_session, store);
+    apply(base: TileSource, recipe: { strokes?: readonly unknown[]; layers?: readonly { id: string; mask?: unknown }[] }, _session?: unknown, context?: {isolated?: boolean}): TileSource {
+      const store = storeFor(ownerOf(_session), base, {});
       // Reads wait for this queued reconciliation; hosts can use store.reconcile for error reporting.
-      const tools = new Set(['brush', 'eraser', 'clone', 'heal', 'spot-heal', 'patch', 'blur', 'sharpen', 'smudge', 'dodge', 'burn', 'sponge', 'colour-replace', 'red-eye']);
-      const strokes = (recipe.strokes ?? []) as readonly Stroke[];
-      const supported = strokes.filter(stroke => stroke.layer === undefined && tools.has(stroke.tool));
-      if (context?.isolated) return store.fork(supported);
-      store.reconcileStage(supported);
+      const strokes = strokesFor((recipe.strokes ?? []) as readonly Stroke[], {});
+      if (context?.isolated) return store.fork(strokes);
+      live(_session, {}, store);
+      // Layers and masks that are gone no longer take part in previews.
+      const stores = _session && typeof _session === 'object' ? sessions.get(_session) : undefined;
+      if (stores) {
+        const layers = new Map((recipe.layers ?? []).map(layer => [layer.id, layer]));
+        for (const [key, { target }] of stores) if (target.layer !== undefined && (!layers.has(target.layer) || (target.mask && !layers.get(target.layer)!.mask))) stores.delete(key);
+      }
+      store.reconcileStage(strokes);
+      return store;
+    },
+    /** Replay strokes aimed at one layer's pixels, or at its mask, in the layer's own pixels. */
+    applyLayer(pixels: TileSource, layer: { id: string }, recipe: { strokes?: readonly unknown[] }, _session?: unknown, context?: {isolated?: boolean; mask?: boolean}): TileSource {
+      const target: StrokeTarget = { layer: layer.id, ...(context?.mask ? { mask: true } : {}) }, owner = ownerOf(_session);
+      const strokes = strokesFor((recipe.strokes ?? []) as readonly Stroke[], target);
+      // A layer nobody has painted keeps its own source, at no cost.
+      if (!strokes.length && !existing(owner, pixels, target)) return pixels;
+      const store = storeFor(owner, pixels, target);
+      if (context?.isolated) return store.fork(strokes);
+      live(_session, target, store);
+      store.reconcileStage(strokes);
       return store;
     },
   };

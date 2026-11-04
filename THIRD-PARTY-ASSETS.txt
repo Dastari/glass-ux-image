@@ -712,3 +712,168 @@ Alliance for Open Media Patent License 1.0
       the Alliance for Open Media as a Final Deliverable for which this
       License was issued.
 
+
+Advanced import codecs (lazy modules; 2026-11-03)
+
+utif2 4.1.0: MIT, Copyright (c) 2017 Photopea and contributors.
+Source: https://github.com/photopea/UTIF.js
+ag-psd 34.1.0: MIT, Copyright (c) 2016 Agamnentzar.
+Source: https://github.com/Agamnentzar/ag-psd
+ag-psd's CMYK conversion coefficients derive from PDF.js, Copyright 2012 Mozilla
+Foundation, Apache-2.0 (the Apache licence text is retained in this inventory).
+Their transitive JS dependencies are pako 1.0.11/2.1.0 (MIT AND Zlib) and
+base64-js 1.5.1 (MIT). Copyright/licence texts follow below.
+
+HEIC/HEIF: native platform decoding only unless a host supplies loadHeif, a dynamic
+import of an independently installed peer adapter. No HEVC codec, libheif, LGPL
+code, WASM binary or remote decoder download is distributed by this package.
+libheif itself is LGPL: https://github.com/strukturag/libheif#license
+HEVC has separate patent licensing programmes; a MIT wrapper is not a HEVC patent
+licence. Hosts choose any peer and review its codec/transitive licence and patent
+obligations. This package grants no HEVC patent rights.
+Primary programme reference: https://www.via-la.com/licensing-2/hevc/
+
+Fixtures: e2e/fixtures/imports/* are original generated geometric images under this
+repository's MIT licence (generate.mjs); no photos or Adobe fixtures were copied.
+RAW tests generate solid-colour JPEGs with the browser encoder and synthetic camera
+headers, never redistributed camera images. See e2e/fixtures/imports/README.md.
+
+utif2
+
+MIT License
+
+Copyright (c) 2017 Photopea
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ag-psd
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Agamnentzar
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+
+Any image or brush files included in this repository are not covered by this
+license and belong to their copyright holders.
+
+CMYK to RGB conversion coefficients in src/psdReader.ts are taken from pdf.js
+(https://github.com/mozilla/pdf.js), Copyright 2012 Mozilla Foundation,
+licensed under the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0).
+
+pako 1.0.11
+
+(The MIT License)
+
+Copyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+pako 2.1.0
+
+(The MIT License)
+
+Copyright (C) 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+base64-js
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Jameson Little
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Colour-management fixtures and default output profile
+
+e2e/fixtures/colour.ts generates the matrix/TRC ICC fixtures used by unit
+and browser tests; src/io/colour/srgb.ts generates the default output ICC profile.
+The synthetic pixels and AVIF container fixtures are original project test data
+under this repository's MIT licence. No vendor profile binaries or photographs
+are included. Colourant/transfer-function reference numbers follow the ICC RGB
+registry and the published definitions of sRGB, Display P3, Adobe RGB (1998) and
+ProPhoto RGB; these are numerical colour-space definitions, not copied profiles.

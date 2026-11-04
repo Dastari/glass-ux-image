@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button } from 'glass-ux/button';
-import { IconExpand, IconLink, IconLinkOff } from 'glass-ux/icons';
+import { IconExpand } from 'glass-ux/icons';
+import { SettingRow } from 'glass-ux/setting-row';
+import { Switch } from 'glass-ux/switch';
 import { useMessages } from 'glass-ux/i18n';
 import { Segmented } from 'glass-ux/segmented';
 import { PanelGroup, PanelPair } from '../react/panel-layout.js';
@@ -23,7 +24,9 @@ function ResizePanel() {
     return <div className="gi-panel">
       <PanelGroup label={m.size}>
         <Segmented aria-label={m.resize} size="sm" block value={unit} onValueChange={setUnit} options={[{ value: 'px', label: m.pixels }, { value: '%', label: m.percent }]}/>
-        <PanelPair link={<Button size="sm" variant="ghost" icon={locked ? <IconLink /> : <IconLinkOff />} aria-label={m.constrain} aria-pressed={locked} onClick={() => setLocked(!locked)}/>}>{field('width')}{field('height')}</PanelPair>
+        <PanelPair>{field('width')}{field('height')}</PanelPair>
+        {/* R15.4: a boolean setting is a labelled Switch in a setting row, as Canvas size's Transparent is. */}
+        <SettingRow className="gi-panel-setting" label={m.constrain} control={<Switch size="sm" aria-label={m.constrain} checked={locked} onCheckedChange={setLocked}/>}/>
         <GeometryNumber layout="field" label={m.dpi} value={draft.geometry.resize?.dpi ?? 72} min={1} unit="dpi" onChange={dpi => s.preview({ geometry: { ...draft.geometry, resize: { ...size, dpi } } })}/>
       </PanelGroup>
       <GeometryApply label={m.resize}/>

@@ -2,7 +2,7 @@ import { definePack } from "./pack.js";
 
 export default definePack("zh-Hans", {
   canvasLabel: "图像",
-  canvasHelp: "方向键平移，加号和减号缩放，0 适合窗口。",
+  canvasHelp: "方向键平移，加号和减号缩放，0 适应窗口。",
   opening: "正在打开图像",
   openFailed: "无法打开此图像。请检查文件后重试。",
   tools: "工具",
@@ -16,7 +16,7 @@ export default definePack("zh-Hans", {
   reset: "重置",
   zoomIn: "放大",
   zoomOut: "缩小",
-  fit: "适合窗口",
+  fit: "适应窗口",
   actualSize: "实际大小",
   zoomPercent: (percent: string) => `缩放 ${percent}`,
   size: ({ width, height }: { width: string; height: string }) => `${width} × ${height} 像素`,
@@ -48,7 +48,7 @@ export default definePack("zh-Hans", {
   removeCrop: "移除裁剪",
   cropArea: "裁剪区域",
   cropHelp: "方向键移动，Shift 加方向键调整大小，Enter 应用，Esc 取消。",
-  cropReadout: ({ x, y, width, height }: { x: string; y: string; width: string; height: string }) => `${width} × ${height} 像素，位于 ${x}, ${y}`,
+  cropReadout: ({ x, y, width, height }: { x: string; y: string; width: string; height: string }) => `${width} × ${height} 像素，位于 ${x}，${y}`,
   toolSelected: (tool: string) => `${tool}工具`,
   resetTool: (tool: string) => `重置${tool}`,
   nothingToReset: "没有可重置的内容",

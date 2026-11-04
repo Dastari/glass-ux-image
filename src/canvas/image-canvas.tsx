@@ -13,6 +13,20 @@ import { CpuBackend, createRenderBackend, Renderer, type BackendOptions, type Re
 const MARGIN = 24;
 const dpr = () => (typeof window === "undefined" ? 1 : window.devicePixelRatio || 1);
 
+/** Smallest share of the stage, on each axis, that fitting will squeeze the picture into. */
+const MIN_CLEAR = 0.35;
+
+/**
+ * Where a fitted picture goes: the clear box when floating panes leave a usable one, otherwise the
+ * whole stage. Panning and zooming still use the whole stage either way.
+ */
+export function fitBox(stageWidth: number, stageHeight: number, clear: Pick<HTMLElement, "offsetLeft" | "offsetTop" | "offsetWidth" | "offsetHeight"> | null) {
+  const whole = { x: 0, y: 0, width: stageWidth, height: stageHeight };
+  if (!clear || !clear.offsetWidth || !clear.offsetHeight) return whole;
+  const usable = clear.offsetWidth >= Math.max(MARGIN * 4, stageWidth * MIN_CLEAR) && clear.offsetHeight >= Math.max(MARGIN * 4, stageHeight * MIN_CLEAR);
+  return usable ? { x: clear.offsetLeft, y: clear.offsetTop, width: clear.offsetWidth, height: clear.offsetHeight } : whole;
+}
+
 const MappingContext = /* @__PURE__ */ createContext<CanvasMapping | null>(null);
 
 /** Maps the picture to the canvas, for anything drawn in `ImageCanvas`'s children. */
@@ -39,6 +53,10 @@ export interface ImageCanvasProps {
 /**
  * The accelerated view of the nearest editor. It fills its parent. The picture sits on a neutral
  * stage in every theme and direction, so nothing around it changes how its colours read.
+ *
+ * Inside a Glass UX `PaneLayout` with overlay placement, Fit places the picture in the area the
+ * floating panes leave clear, read from `--pane-covered-*`. A host can set those four properties on
+ * any ancestor to keep its own floating content clear. Panning and zooming use the whole stage.
  */
 export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", className, children, onDocumentPointer }: ImageCanvasProps) {
   const session = useEditorContext();
@@ -46,6 +64,12 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
   const messages = useMessages(imageEditorMessages);
   const stageRef = useRef<HTMLDivElement>(null);
   const { width: stageWidth, height: stageHeight } = useElementSize(stageRef);
+  // The part of the stage nothing floats over. PaneLayout's overlay placement publishes how far its
+  // floating stacks reach into the primary panel as --pane-covered-*; elsewhere they are unset, and
+  // this box is the whole stage. Its size changes whenever theirs do, so it is observed, not polled.
+  const clearRef = useRef<HTMLDivElement>(null);
+  const { width: clearWidth, height: clearHeight } = useElementSize(clearRef);
+  const [reading, setReading] = useState<"ltr" | "rtl">("ltr");
   const surface = useRef<HTMLDivElement>(null);
   const renderer = useRef<Renderer | null>(null);
   const [camera, setCamera] = useState<PanZoomCamera>({ x: 0, y: 0, k: 1 });
@@ -86,9 +110,10 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
   const fitCamera = useCallback((): PanZoomCamera | null => {
     const document = session.document;
     if (!document || !stageWidth || !stageHeight) return null;
-    const k = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min((stageWidth - MARGIN * 2) / document.width, (stageHeight - MARGIN * 2) / document.height)));
-    return { k, x: (stageWidth - document.width * k) / 2, y: (stageHeight - document.height * k) / 2 };
-  }, [session, stageWidth, stageHeight]);
+    const box = fitBox(stageWidth, stageHeight, clearRef.current);
+    const k = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min((box.width - MARGIN * 2) / document.width, (box.height - MARGIN * 2) / document.height)));
+    return { k, x: box.x + (box.width - document.width * k) / 2, y: box.y + (box.height - document.height * k) / 2 };
+  }, [session, stageWidth, stageHeight, clearWidth, clearHeight, reading]);
 
   const panZoom = usePanZoom({
     onFrame: present,
@@ -157,7 +182,13 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
     };
   }, [session, status, prefer]);
 
-  // A new shape or stage size refits, unless someone has zoomed in to work on a detail.
+  // The stage is always left to right; the covered amounts follow the page's reading direction.
+  useEffect(() => {
+    const parent = stageRef.current?.parentElement;
+    if (parent) setReading(getComputedStyle(parent).direction === "rtl" ? "rtl" : "ltr");
+  }, [stageWidth, stageHeight]);
+
+  // A new shape, stage size or clear area refits, unless someone has zoomed in to work on a detail.
   const shape = `${session.document?.width}x${session.document?.height}`;
   const lastShape = useRef(shape);
   useEffect(() => {
@@ -166,7 +197,7 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
     lastShape.current = shape;
     if (fitted.current) fit();
     else present(panZoom.camera());
-  }, [status, shape, stageWidth, stageHeight, fit, present, panZoom, draft.geometry, cropping]);
+  }, [status, shape, stageWidth, stageHeight, clearWidth, clearHeight, reading, fit, present, panZoom, draft.geometry, cropping]);
 
   const mapping = useMemo<CanvasMapping>(
     () => ({
@@ -206,7 +237,9 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
       tabIndex={0}
       dir="ltr"
       data-mode="dark"
+      data-reading={reading}
     >
+      <div ref={clearRef} className="gi-stage-clear" aria-hidden="true" />
       <div ref={surface} className="gi-stage-surface" />
       {status === "loading" && (
         <div className="gi-stage-state" role="status">

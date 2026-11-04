@@ -11,7 +11,7 @@ import { retouchStage } from '../../retouch/stage.js';
 import type { Stroke, StrokePoint } from '../../retouch/stroke.js';
 import type { EditRecipe } from '../../session/index.js';
 import { applyPatch } from './patch-action.js';
-import { brushParams, readRetouchSettings, setRetouchSettings, type RetouchKind } from './settings.js';
+import { brushParams, readPaintTarget, readRetouchSettings, setRetouchSettings, targeted, targetMapping, type RetouchKind } from './settings.js';
 import { createId } from '../../core/id.js';
 
 interface Gesture { stroke: Stroke | null; base: EditRecipe; points: StrokePoint[]; selection: boolean; grid?: LiquifyGrid; last?: StrokePoint }
@@ -34,9 +34,13 @@ export function RetouchOverlay({ kind, liquify }: RetouchOverlayProps) {
   const lastCursor = useRef<StrokePoint | null>(null);
   const settings = readRetouchSettings(session, kind);
   const settingsRef = useRef(settings); settingsRef.current = settings;
-  const sourcePoint = (x: number, y: number): StrokePoint | null => { const p = session.toSource(x, y); return p ? { x: p[0], y: p[1] } : null; };
+  // Liquify warps the base picture; every other tool paints the chosen layer, its mask, or the base.
+  const target = kind === 'liquify' ? {} : readPaintTarget(session), map = targetMapping(session, target);
+  const mapRef = useRef(map); mapRef.current = map;
+  const targetRef = useRef(target); targetRef.current = target;
+  const sourcePoint = (x: number, y: number): StrokePoint | null => { const p = mapRef.current.to(x, y); return p ? { x: p[0], y: p[1] } : null; };
   const screenPoint = (p: StrokePoint) => {
-    const q = session.fromSource(p.x, p.y); if (!q) return null;
+    const q = mapRef.current.from(p.x, p.y); if (!q) return null;
     const r = mapping.toScreen({ x: q[0], y: q[1], width: 0, height: 0 }); return { x: r.x, y: r.y };
   };
   const drawSelection = (points: readonly StrokePoint[]) => {
@@ -100,7 +104,7 @@ export function RetouchOverlay({ kind, liquify }: RetouchOverlayProps) {
       g.grid = (g.base.filters.liquify as LiquifyGrid | undefined) ?? liquify.create(work.width, work.height);
       g.last = at;
       g.grid = liquify.apply(g.grid, s.mode, { ...at, radius: s.size / 2, strength: s.strength, dx: s.size * .1, dy: 0 });
-    } else if (!selecting) g.stroke = { id: createId(), tool: kind, params: brushParams(s, p), points: [] };
+    } else if (!selecting) g.stroke = targeted({ id: createId(), tool: kind, params: brushParams(s, p), points: [] as StrokePoint[] }, targetRef.current) as Stroke;
     gesture.current = g;
     if (!selecting) flush();
   };
@@ -174,7 +178,7 @@ export function RetouchOverlay({ kind, liquify }: RetouchOverlayProps) {
     return () => { if (frame.current) cancelAnimationFrame(frame.current); if (gesture.current) { gesture.current = null; session.revert(); restorePixels(); } };
   }, [session, kind]);
   useEffect(() => { const p = lastCursor.current; if (p) showCursor(p); });
-  return <div ref={root} className="gi-retouch-overlay" data-canvas-tool="" data-retouch-tool={kind} role="group" aria-label={`${words[kind]}: ${words.cursor}`} aria-description={`${words.keyboardHelp} ${kind === 'clone' || kind === 'heal' || kind === 'patch' ? words.sourceHint : ''}`} tabIndex={0} onPointerDown={down} onPointerMove={move} onPointerUp={event => { if (gesture.current) { event.stopPropagation(); finish(); } }} onPointerCancel={cancel} onLostPointerCapture={cancel} onPointerLeave={() => { if (!gesture.current) cursor.current?.querySelector('[data-brush-ring]')?.setAttribute('visibility', 'hidden'); }} onKeyDownCapture={key}>
+  return <div ref={root} className="gi-retouch-overlay" data-canvas-tool="" data-retouch-tool={kind} data-paint-layer={target.layer} data-paint-mask={target.mask ? '' : undefined} role="group" aria-label={`${words[kind]}: ${words.cursor}`} aria-description={`${words.keyboardHelp} ${kind === 'clone' || kind === 'heal' || kind === 'patch' ? words.sourceHint : ''}`} tabIndex={0} onPointerDown={down} onPointerMove={move} onPointerUp={event => { if (gesture.current) { event.stopPropagation(); finish(); } }} onPointerCancel={cancel} onLostPointerCapture={cancel} onPointerLeave={() => { if (!gesture.current) cursor.current?.querySelector('[data-brush-ring]')?.setAttribute('visibility', 'hidden'); }} onKeyDownCapture={key}>
     <BrushCursor ref={cursor} hidden />
     <div className="gi-feedback gi-retouch-error" role="status"><Notice role="none" tone="danger" style={{visibility: failed ? undefined : "hidden"}}>{words.previewFailed}</Notice></div>
   </div>;

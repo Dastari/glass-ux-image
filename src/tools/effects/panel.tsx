@@ -28,7 +28,7 @@ const previews = new WeakMap<EditorSession, {
     promise: ReturnType<EditorSession['readPreview']>;
 }>();
 function preview(session: EditorSession) { const existing = previews.get(session); if (existing?.recipe === session.state.draft)
-    return existing.promise; const promise = session.readPreview(48); previews.set(session, { recipe: session.state.draft, promise }); return promise; }
+    return existing.promise; const promise = session.readPreview(360); previews.set(session, { recipe: session.state.draft, promise }); return promise; }
 /** A session-bound gallery category or full gallery, usable inside any editor provider or with a session. */
 export interface FilterGalleryPanelProps {
     /** Session to edit; defaults to the nearest ImageEditorProvider. */

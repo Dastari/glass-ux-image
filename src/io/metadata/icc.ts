@@ -2,6 +2,7 @@ import { ascii, bounded, concat, ensure, FileDataError, MAX_METADATA_BYTES, rang
 import { assemble, chunk, chunks } from '../formats/container.js';
 import { sniffFormat } from '../formats/index.js';
 import { assembleWebp } from './index.js';
+import { profileConversion, type ProfileFailure } from '../colour/profile.js';
 /** Inject zlib for other workers/runtimes. The default uses bounded streaming, never an unbounded Response. */
 export interface ProfileCompression { inflate(bytes: Uint8Array): Promise<Uint8Array>; deflate(bytes: Uint8Array): Promise<Uint8Array> }
 async function streamUnchecked(bytes: Uint8Array, compress: boolean) {
@@ -16,7 +17,7 @@ async function stream(bytes:Uint8Array,compress:boolean) {
 }
 /** Browser compression adapter used for embedded PNG profiles. */
 export const streamProfileCompression: ProfileCompression={inflate:b=>stream(b,false),deflate:b=>stream(b,true)};
-/** Embedded profile bytes and a description-based identification, without pixel conversion. */
+/** Embedded profile bytes, description and supported conversion status. */
 export interface IccProfile {
   /** Original complete ICC profile bytes. */
   bytes:Uint8Array;
@@ -24,11 +25,12 @@ export interface IccProfile {
   description:string;
   /** Familiar name inferred from the description; not a validation of the profile tables. */
   colourSpace:'srgb'|'display-p3'|'adobe-rgb'|'other';
+  /** Whether the RGB matrix/TRC tables can be converted into the working space. */
+  conversion?:'matrix-trc'|'unsupported';
+  /** Why the engine falls back to interpreting source samples as sRGB. */
+  conversionReason?:ProfileFailure;
 }
-/** Names identify familiar profiles by description, not by verifying their colourimetric tables.
- * No ICC conversion runs here. Browser decode/canvas may honour supported source profiles;
- * the engine still works in linear sRGB. Reattaching a wide-gamut profile to sRGB output
- * does not make wide-gamut output: the host must convert pixels before labelling them. */
+/** Names come from descriptions; conversion support is checked independently from profile tables. */
 export function describeIcc(bytes: Uint8Array): IccProfile {
   bounded(bytes,MAX_METADATA_BYTES); range(bytes,0,132); ensure(u32(bytes,0)===bytes.length&&ascii(bytes.subarray(36,40))==='acsp','Invalid ICC profile');
   const count=u32(bytes,128); ensure(count<=4096); range(bytes,132,count*12); let description='Unknown ICC profile';
@@ -40,7 +42,8 @@ export function describeIcc(bytes: Uint8Array): IccProfile {
     if(type==='mluc') { const n=u32(d,8), stride=u32(d,12); ensure(n<=128&&stride>=12); range(d,16,n*stride); if(n) { const length=u32(d,20),start=u32(d,24); ensure(length<=8192&&length%2===0); range(d,start,length); description=new TextDecoder('utf-16be').decode(d.subarray(start,start+length)); } }
   }
   const colourSpace=/display\s*p3/i.test(description)?'display-p3':/adobe\s*rgb/i.test(description)?'adobe-rgb':/sRGB/i.test(description)?'srgb':'other';
-  return {bytes:bytes.slice(),description,colourSpace};
+  const conversion=profileConversion(bytes);
+  return {bytes:bytes.slice(),description,colourSpace,conversion:conversion.transform?'matrix-trc':'unsupported',...(conversion.reason?{conversionReason:conversion.reason}:{})};
 }
 /** Extract and validate a bounded embedded ICC payload without changing image colours. */
 export async function extractIcc(bytes: Uint8Array, compression=streamProfileCompression): Promise<IccProfile | null> {

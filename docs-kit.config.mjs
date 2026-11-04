@@ -16,6 +16,7 @@ export default defineDocsKit({
       "./i18n/*",
       "./messages/*",
       "./codecs/*",
+      "./fill",
     ],
     expand: {
       "./tools/*": [
@@ -26,6 +27,7 @@ export default defineDocsKit({
         "straighten",
         "move",
         "transform",
+        "perspective",
         "canvas-size",
         "adjust",
         "export",
@@ -91,6 +93,7 @@ export default defineDocsKit({
       "src/retouch/index.ts",
       "src/layers-text/index.ts",
       "src/codecs/avif.ts",
+      "src/fill/index.ts",
     ],
   },
   families: {

@@ -19,6 +19,7 @@ export const workspaceMessages = defineMessages("imageEditor.workspace", {
 });
 export type WorkspaceMessages = MessageValues<typeof workspaceMessages.defaults>;
 
-declare module "glass-ux/i18n" {
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
   interface MessageCatalog { "imageEditor.workspace": WorkspaceMessages }
 }

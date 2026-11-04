@@ -54,6 +54,32 @@ export const geometryMessages = defineMessages("imageEditor.geometry", {
   "dial": "Rotation dial",
   "edges": "Edges",
   "showAll": "Show all",
-  "cropToFill": "Crop to fill"
+  "cropToFill": "Crop to fill",
+  "perspective": "Perspective",
+  "upright": "Upright",
+  "vertical": "Vertical",
+  "horizontal": "Horizontal",
+  "aspect": "Aspect",
+  "guided": "Guided",
+  "guideHint": "Draw two to four lines along edges that should be vertical or horizontal.",
+  "guideMore": "Draw one more line to correct the perspective.",
+  "guideLimit": "Four guides at most. Drag an end to move a guide.",
+  "verticalGuide": "Vertical guide",
+  "horizontalGuide": "Horizontal guide",
+  "removeGuide": (guide: string) => `Remove ${guide}`,
+  "guideStart": (guide: string) => `${guide}, start`,
+  "guideEnd": (guide: string) => `${guide}, end`,
+  "clearGuides": "Clear guides",
+  "fillEdges": "Fill edges",
+  "fillEdgesHint": "Fills the empty edges with detail from the picture. Turns, perspective and canvas become part of the picture; undo restores them.",
+  "fillingEdges": "Filling edges",
+  "edgesFilled": "Edges filled",
+  "noEmptyEdges": "There are no empty edges to fill.",
+  "fillFailed": "The edges could not be filled."
 });
 export type GeometryMessages = MessageValues<typeof geometryMessages.defaults>;
+
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
+  interface MessageCatalog { "imageEditor.geometry": GeometryMessages }
+}

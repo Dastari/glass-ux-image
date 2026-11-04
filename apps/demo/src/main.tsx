@@ -31,6 +31,9 @@ if (params.get("lang") === "ar" || direction === "rtl") {
   configureLocale("ar");
 }
 
+// Opt-in browser fixture for Glass UX's FileProvider conformance suite and the package's reader.
+if (params.has("provider-test")) void import("./domains/provider-proof");
+
 type View = "workspace" | "editor" | "custom" | "engine" | "templates";
 
 function App() {

@@ -6,6 +6,7 @@ import tailwind from "@tailwindcss/vite";
 import { glassUx } from "glass-ux/vite";
 
 export default defineConfig({
+  worker: { format: "es" },
   base: process.env.GLASS_UX_IMAGE_BASE ?? "./",
   plugins: [
     ...(process.env.GI_OWN_PORT ? [{

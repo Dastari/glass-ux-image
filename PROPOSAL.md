@@ -3,9 +3,10 @@
 `glass-ux-image` is a component library that plugs into Glass UX. It is not an application. The
 full editor is one composition of its parts, and the demo site is one consumer of that composition.
 
-Status: Stages 1 to 3 are built, in `src/` and `apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every
-tool, the kits and templates, and the hooks and parts under them. The owner reordered the later stages on
-2026-11-02: `docs/stage-3-brief.md` records that work and its engine contract. Mock-ups live in `mockups/` and
+Status: released as 0.1.0 on 2026-11-04, on glass-ux 0.15.0. Stages 1 to 3 are built, in `src/` and
+`apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every tool, the kits and templates, and the hooks and
+parts under them. The owner reordered the later stages on 2026-11-02: `docs/stage-3-brief.md` records that
+work and its engine contract, and `docs/gaps-brief.md` the work that closed the remaining gaps before 0.1.0. Mock-ups live in `mockups/` and
 are built with the published `glass-ux` 0.13.0 release.
 
 ```sh
@@ -366,18 +367,92 @@ Worked out along the way:
 - **Danger states already announce themselves.** `EmptyState` and `Notice` set `role="alert"`, so a wrapper must
   not add another.
 
-Still open:
+Everything left open here was closed before 0.1.0; see the next section.
 
-- **The CPU backend still composes on the main thread,** and a large brush dab cannot be split across frames.
-- **Layer strokes and mask erasing** are not built: strokes apply to the base picture.
-- **Colour:** ICC profiles are read and written back, but pixels are not converted. Working space is linear sRGB.
-- **AVIF export strips metadata,** and the export panel says so.
-- **Focus panels float in their tracks** through PaneLayout's overlay placement; they are not free windows.
-- **One stroke timing test can fail occasionally** on SwiftShader's graphics process (1 run in 25), with the
-  main thread clear. The limit stays.
-- **Advanced items are later:** perspective correction, content-aware crop, and TIFF, HEIC, RAW and PSD import.
-- **Translations are unreviewed, and only Chromium has run this.**
-- **Nothing is committed or published.** There is no remote yet.
+### Before 0.1.0: closing the gaps
+
+Built on 2026-11-03 and 2026-11-04 against glass-ux 0.15.0 by six agents working from `docs/gaps-brief.md`,
+then integrated, reviewed and tested together.
+
+Measured on 2026-11-04 against glass-ux 0.15.0, in the same headless environment. SwiftShader timings find stalls;
+they say nothing about GPU speed.
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 867 |
+| Browser tests, Chromium and Firefox | 585: 584 passed on the final run, and the one failure was a test still looking for the old Arabic word for Crop after the translation review; it passes with the new one |
+| Docs site tests | 17 of 17 |
+| Independent review of the new code | 8 defects (4 in TIFF parsing and decode timeouts, the CPU worker fallback, filter identity, masks at coarse levels, profile export), all fixed with regression tests |
+| Backend conformance | Unchanged limits; worker and synchronous CPU saved PNGs byte-identical |
+| Eager code, gzipped (`kits/basic`, `standard`, `advanced`) | 104 KB, 193 KB, 190 KB |
+| Eager code, `PhotoEditor` and `ImageEditor` with all kits | 145 KB and 373 KB |
+| Lazy code, gzipped | 357 to 381 KB per entry: decoders, workers and the AVIF glue, loaded only when used |
+| Release archive | 1.77 MB unpacked, 0.48 MB compressed |
+
+- **Off the main thread:** built-in CPU tile composition (filters, blends and layers) runs in a module worker.
+  Cancellation terminates stale work, frame and cache budgets still hold, and worker floats and saved PNGs
+  match synchronous CPU output exactly. Custom filters can use a host-supplied worker
+  (`createCpuWorkerHandler`); runtimes without workers stay synchronous.
+- **The intermittent stroke stall** came from re-presenting unchanged viewport draws while tiles were pending.
+  Those submissions are skipped, and both timing cases passed 26 times each with unchanged limits.
+- **Layer strokes and masks:** painting and retouching work on the selected image layer, in its own pixels
+  (`Stroke.layer`), through undo, saving, project files, flatten and merge down. A layer can have a mask
+  (`LayerSpec.mask`, Reveal all or Hide all, on or off), painted by strokes with `mask: true`: brush reveals,
+  eraser hides. Apply bakes it into the layer and Delete removes it, each one undo step through `layers.mask.*`
+  actions. The Layers panel shows layer and mask thumbnails, and every painting panel has a Paint on choice.
+- **Large dabs** pause every sixteen rows within the renderer's 8 ms budget, with identical results.
+- **Colour:** embedded RGB matrix/TRC ICC v2 and v4 profiles (Display P3, Adobe RGB, ProPhoto, sRGB variants,
+  sampled and parametric curves) convert into linear sRGB before pyramid averaging, and float tiles keep
+  out-of-gamut values. Export embeds sRGB by default; source-profile export converts before byte clipping and
+  embeds the source profile. Unsupported profiles fall back to sRGB with a note in the metadata panel.
+- **AVIF export** writes EXIF, XMP and ICC colour information and keeps nclx coding information; the stripping
+  warning is gone. The AVIF encoder stays out of any bundle that only writes PNG, JPEG or WebP.
+- **Import formats:** TIFF (first page), PSD (composite and raster layers with names, opacity, visibility,
+  offsets, supported blends and lossless assets, through undo and project files), camera RAW (the largest
+  embedded JPEG preview, orientation kept, labelled as a preview: this is not demosaicing) and HEIF (the
+  browser's decoder or a host-supplied one; no HEVC code is bundled). Each decoder is its own lazy chunk, and
+  pickers use `IMAGE_IMPORT_ACCEPT`. See `docs/import-formats.md`.
+- **Perspective** (`tools/perspective`, in `kits/standard`): vertical and horizontal keystone, rotate, aspect
+  and scale, plus guided mode, where two to four lines drawn along edges that should be plumb or level are
+  solved together. It writes `geometry.distort`; its settings are plain data in `recipe.filters.perspective`.
+- **Fill edges** (`image.fillEdges`, in Rotate, Perspective, Crop and Canvas size): PatchMatch inpainting fills
+  the corners left by a free angle, perspective or added canvas, in a worker, as one undo step through a source
+  checkpoint, as flatten does.
+- **Focus fits to the clear area:** `ImageCanvas` fits the picture to the part of the stage PaneLayout's
+  `--pane-covered-*` leaves clear; zoom and pan use the whole stage.
+- **Histogram RGB:** Glass UX's `Histogram` has no series, so RGB overlays three single-channel histograms on the
+  stage's dark neutral.
+- **File providers:** Glass UX's `testFileProvider` passes in the browser (17 of 17). The reader pins every range
+  to one version and handles listings without a size or version.
+- **Smaller visual gaps:** recognisable filter thumbnails (`detailScale`), templates that fill their frame
+  (`createImageWorkspace({ library: 'tab' })` below 72rem), a labelled Constrain switch in Resize (R15.4),
+  short public usage code on docs pages, and a Layers panel without the clipped empty state.
+- **Size checks** measure eager code (what an entry loads before it runs) against the kit budgets and lazy code
+  (decoders, workers) against its own budgets. Workers build as ES modules so each decoder stays its own chunk.
+- **Browsers:** Firefox runs the cross-browser smoke spec here on its CPU renderer. CI runs Firefox and WebKit on
+  every push and before a release.
+- **Translations** had a model review: 272 strings in all 11 languages corrected towards standard Photoshop and
+  Lightroom terms, Glass UX's own words and each pack's register. Notes per language, including what a native
+  speaker should check first (Arabic and Hebrew, which have no Adobe terminology to follow), are in
+  `docs/translation-review/`. It is not a native speaker's sign-off.
+
+Known limits, recorded rather than open:
+
+- **Colour:** LUT-based and non-RGB ICC profiles are not converted, and browser decoding and encoding are 8-bit.
+  AVIF does not carry IPTC.
+- **Import:** 16-bit TIFF and PSD come in at 8 bits; BigTIFF, separate TIFF planes, CCITT, old-style JPEG, CMYK
+  and non-JPEG YCbCr TIFF are rejected with a clear error; PSD groups,
+  masks, effects and clipping are not fully faithful; RAW was tested on generated containers, not a camera corpus;
+  native Safari HEIF is untested.
+- **Layers:** text layers cannot be painted or masked, Liquify warps only the base, and Apply mask bakes to 8-bit.
+  There is no mask overlay view. Coarse levels of a masked layer are built from the masked full-resolution
+  pixels; a large, fully soft mask fills in over a few frames when first zoomed out, and each watched masked
+  layer keeps up to 32 MiB of coarse tiles.
+- **Profile export** composites in linear float before converting to the destination profile, so it holds a
+  full float frame, 16 bytes a pixel, plus resize buffers.
+- **Fill edges** holds the composed picture as floats on the main thread before transfer, 16 bytes a pixel, which
+  limits very large pictures. Guides cannot be drawn from the keyboard; the sliders are the equivalent.
+- **Focus panels float in their tracks;** they are not free windows.
 
 ## Decisions
 

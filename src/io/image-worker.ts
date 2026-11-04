@@ -1,22 +1,22 @@
 import { prepareImage } from './prepare.js';
-import { createBytePyramid } from "../core/byte-pyramid.js";
+import { createColourPyramid } from './colour/index.js';
 import type { TileAddress } from "../core/pyramid.js";
 
 export type WorkerRequest = { type: "open"; blob: Blob; maxPixels?:number } | { type: "tile"; id: number; tile: TileAddress };
 
 /* Decoding and the pyramid are the slow parts of opening a photo, so neither runs on the page. */
-let pyramid: ReturnType<typeof createBytePyramid> | undefined;
+let pyramid: ReturnType<typeof createColourPyramid> | undefined;
 
 async function open(blob: Blob,maxPixels?:number) {
   const prepared=await prepareImage(blob,maxPixels);
-  const bitmap = await createImageBitmap(prepared.decodeBlob,{imageOrientation:'from-image'});
+  const bitmap = await createImageBitmap(prepared.decodeBlob,{imageOrientation:'from-image',colorSpaceConversion:'none'});
   const { width, height } = bitmap;
   const canvas = new OffscreenCanvas(width, height);
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) throw new Error("No 2D canvas");
   context.drawImage(bitmap, 0, 0);
   bitmap.close();
-  pyramid = createBytePyramid(context.getImageData(0, 0, width, height).data, { width, height });
+  pyramid = createColourPyramid(context.getImageData(0, 0, width, height).data, { width, height },prepared.icc);
   return { width, height, metadata:prepared.metadata,icc:prepared.icc,frameCount:prepared.frameCount };
 }
 

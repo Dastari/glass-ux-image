@@ -155,3 +155,16 @@ if (new URLSearchParams(location.search).has("layers-test")) {
     },
   });
 }
+
+// Layer strokes and masks through a project file, for e2e/layer-strokes.spec.ts: public entries only.
+if (new URLSearchParams(location.search).has("layers-test")) {
+  Object.assign(window, {
+    layerProjectRoundTrip: async (session: import("glass-ux-image/session").EditorSession) => {
+      const { snapshotSession, encodeProject, attachSessionFiles } = await import("glass-ux-image/io");
+      const blob = await encodeProject(await snapshotSession(session));
+      const detach = attachSessionFiles(session);
+      try { await session.run("file.project.open", blob); } finally { detach(); }
+      return blob.size;
+    },
+  });
+}

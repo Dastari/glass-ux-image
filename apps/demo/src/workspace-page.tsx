@@ -6,7 +6,7 @@ import { Notice } from 'glass-ux/notice';
 import { useMessages } from 'glass-ux/i18n';
 import { ImageEditorView, type OpenPicture, type ImageWorkspace } from 'glass-ux-image/editor';
 import { createEditorSession, type EditorSession } from 'glass-ux-image/session';
-import { attachSessionFiles, autosaveSession, opfsAutosaveStore, indexedDbAutosaveStore, listRecovery, decodeProject, imagesFromPaste, type AutosaveStore, type RecoveryCandidate } from 'glass-ux-image/io';
+import { attachSessionFiles, autosaveSession, opfsAutosaveStore, indexedDbAutosaveStore, listRecovery, decodeProject, imagesFromPaste, IMAGE_IMPORT_ACCEPT, type AutosaveStore, type RecoveryCandidate } from 'glass-ux-image/io';
 import { filesTool, exportTool, metadataTool, batchTool } from 'glass-ux-image/tools/export';
 import { standard } from 'glass-ux-image/kits/standard';
 import { advanced } from 'glass-ux-image/kits/advanced';
@@ -65,7 +65,7 @@ export function WorkspacePage(){
   return <div className="workspace-host" onDragOver={e=>{if(e.dataTransfer.types.includes('Files'))e.preventDefault();}} onDrop={e=>{if(e.dataTransfer.files.length){e.preventDefault();open(Array.from(e.dataTransfer.files));}}} onPaste={e=>{const files=imagesFromPaste(e.nativeEvent);if(files.length){e.preventDefault();open(files);}}}>
     <div className="workspace-host-bar">
       <Button variant="secondary" size="sm" icon={<IconUpload/>} onClick={()=>picker.current?.click()}>{m.open}</Button>
-      <input ref={picker} type="file" multiple accept="image/*,.guxi" hidden aria-label={m.open} onChange={e=>{const files=Array.from(e.currentTarget.files??[]);if(files.length)open(files);e.currentTarget.value='';}}/>
+      <input ref={picker} type="file" multiple accept={`${IMAGE_IMPORT_ACCEPT},.guxi`} hidden aria-label={m.open} onChange={e=>{const files=Array.from(e.currentTarget.files??[]);if(files.length)open(files);e.currentTarget.value='';}}/>
       {recovery[0]&&<Notice compact action={<Button size="sm" onClick={()=>void recover(recovery[0]!)}>{m.recover}</Button>}>{m.recovery}</Notice>}
       <span role="status" className="workspace-host-status"><Badge size="sm" tone={failed?'danger':store?'success':'neutral'} marker="dot">{failed?m.failed:store?m.autosave:m.noAutosave}</Badge></span>
     </div>

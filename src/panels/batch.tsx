@@ -7,6 +7,7 @@ import { useMessages } from 'glass-ux/i18n';
 import { filesMessages, type FilesMessages } from '../messages/files.js';
 import { useBatch, useImageBatch } from '../react/files.js';
 import type { BatchResult, BatchSettings } from '../io/batch/index.js';
+import { IMAGE_IMPORT_ACCEPT } from '../io/formats/index.js';
 import type { EditorSession, EditRecipe } from '../session/index.js';
 import { ExportPanel } from './export.js';
 import { PanelActions } from '../react/panel-layout.js';
@@ -42,7 +43,7 @@ export function BatchPanel({sources:controlled,defaultSources=[],onSourcesChange
   const updateSources=(next:readonly File[])=>{if(controlled===undefined)setLocal(next);onSourcesChange?.(next);};
   const value:EncodeOptions={type:settings.format??'image/png',quality:settings.quality,alpha:settings.alpha,metadata:settings.metadata,width:settings.width,height:settings.height};
   const run=async()=> {setError(false);try {const results=await batch.run(sources);await onComplete?.(results);}catch{setError(true);}};
-  return <div className="gi-panel gi-files"><FileDrop aria-label={m.sources} accept="image/*" multiple disabled={batch.running} onFiles={files=>updateSources([...sources,...files])}/>
+  return <div className="gi-panel gi-files"><FileDrop aria-label={m.sources} accept={IMAGE_IMPORT_ACCEPT} multiple disabled={batch.running} onFiles={files=>updateSources([...sources,...files])}/>
     <ExportPanel value={value} onValueChange={v=>{const next={...settings,format:v.type,quality:v.quality,alpha:v.alpha,metadata:v.metadata,width:v.width,height:v.height};if(provided===undefined)setLocalSettings(next);onSettingsChange?.(next);}} labels={labels}/>
     <PanelActions><Button size="sm" variant="primary" disabled={!sources.length||batch.running} onClick={()=>void run()}>{m.run}</Button></PanelActions>
     <Progress label={m.progress} value={batch.progress?.completed??0} max={Math.max(1,sources.length)} action={batch.running?<Button size="sm" onClick={batch.cancel}>{m.cancel}</Button>:undefined}/>

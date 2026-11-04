@@ -2,7 +2,7 @@ import { definePack } from "./pack.js";
 
 export default definePack("he", {
   canvasLabel: "תמונה",
-  canvasHelp: "מקשי החצים מזיזים, פלוס ומינוס משנים זום, ו-0 מתאים את התמונה.",
+  canvasHelp: "מקשי החצים מזיזים, פלוס ומינוס משנים זום, ו־0 מתאים את התמונה.",
   opening: "פותח תמונה",
   openFailed: "לא ניתן לפתוח את התמונה. יש לבדוק את הקובץ ולנסות שוב.",
   tools: "כלים",
@@ -47,7 +47,7 @@ export default definePack("he", {
   applyCrop: "החלת חיתוך",
   removeCrop: "הסרת חיתוך",
   cropArea: "אזור חיתוך",
-  cropHelp: "מקשי החצים מזיזים, Shift עם החצים משנה גודל, Enter מחיל ו-Escape מבטל.",
+  cropHelp: "מקשי החצים מזיזים, Shift עם החצים משנה גודל, Enter מחיל ו־Escape מבטל.",
   cropReadout: ({ x, y, width, height }: { x: string; y: string; width: string; height: string }) => `${width} על ${height} פיקסלים, במיקום ${x}, ${y}`,
   toolSelected: (tool: string) => `כלי ${tool}`,
   resetTool: (tool: string) => `איפוס ${tool}`,

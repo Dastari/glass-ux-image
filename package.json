@@ -1,6 +1,6 @@
 {
   "name": "glass-ux-image",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Image editing components and an accelerated image engine for Glass UX.",
   "type": "module",
@@ -75,6 +75,10 @@
     "./editor": {
       "types": "./dist/editor/index.d.ts",
       "import": "./dist/editor/index.js"
+    },
+    "./fill": {
+      "types": "./dist/fill/index.d.ts",
+      "import": "./dist/fill/index.js"
     },
     "./retouch": {
       "types": "./dist/retouch/index.d.ts",
@@ -164,7 +168,9 @@
     "docs:typecheck": "node scripts/check-doc-samples.mjs && tsc --noEmit -p apps/docs/tsconfig.json"
   },
   "dependencies": {
-    "@jsquash/avif": "^2.1.1"
+    "@jsquash/avif": "^2.1.1",
+    "ag-psd": "^34.1.0",
+    "utif2": "^4.1.0"
   },
   "peerDependencies": {
     "glass-ux": ">=0.15 <0.16",

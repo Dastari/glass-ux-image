@@ -1,0 +1,6 @@
+import { perspective } from "glass-ux-image/tools/perspective";
+import { PhotoEditor } from "glass-ux-image/photo-editor";
+
+export function PerspectiveEditor({ src }: { src: string }) {
+  return <PhotoEditor src={src} tools={[perspective]} />;
+}

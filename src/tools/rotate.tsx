@@ -13,6 +13,7 @@ import { imageEditorMessages } from '../react/messages.js';
 import { useEditorContext, useSessionState } from '../react/session-context.js';
 import { defineTool } from '../react/tool.js';
 import type { EditorSession } from '../session/index.js';
+import { FillEdges, fillEdgesAction } from './fill-edges.js';
 import { GeometryNumber } from './transform-controls.js';
 import { levelAngle, lineLean, wrapAngle } from './transform-math.js';
 
@@ -63,6 +64,7 @@ function RotatePanel() {
       </PanelGroup>
       <PanelGroup label={m.edges}>
         <Segmented aria-label={m.edges} size="sm" value={fit} onValueChange={(next: Fit) => session.commit({ geometry: { ...session.state.draft.geometry, angleFit: next } }, { label: base.rotate })} options={[{ value: 'expand', label: m.showAll }, { value: 'inset', label: m.cropToFill }]}/>
+        {fit === 'expand' && <FillEdges />}
       </PanelGroup>
       <PanelGroup label={m.angleFinder}>
         <PanelHint>{m.measureHint}</PanelHint>
@@ -253,7 +255,7 @@ function resetRotation(geometry: Geometry, session: EditorSession): Geometry {
  */
 export const rotate = defineTool({
     id: 'rotate', group: 'geometry', label: m => m.rotate, icon: <IconRotateCw />, shortcut: 'r', standalone: true,
-    Panel: RotatePanel, Overlay: RotateOverlay,
+    Panel: RotatePanel, Overlay: RotateOverlay, actions: [fillEdgesAction],
     reset: (recipe, session) => ({ geometry: resetRotation(recipe.geometry, session) }),
     leave: session => session.setToolData(ANGLE_LINE, undefined),
 });

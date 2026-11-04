@@ -14,8 +14,26 @@
   .gi-develop-histogram-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-inline-size: 0; min-block-size: var(--control-h-sm); }
   .gi-develop-histogram-title { min-inline-size: 0; overflow: clip; overflow-clip-margin: var(--focus-reach); text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--weight-medium); }
   /* Under 5rem the chart takes its micro tier: columns only, no axis ticks to read. */
-  .gi-develop-histogram-chart { padding: var(--space-2); }
-  .gi-develop-histogram-chart > .fa-chart { block-size: 4.5rem; }
+  .gi-develop-histogram-chart { padding: var(--space-2); border-radius: var(--radius-tile); background: var(--gi-stage-well); box-shadow: inset 0 0 0 var(--border-width) var(--line); }
+  .gi-develop-histogram-chart > .fa-chart, .gi-develop-histogram-rgb > .fa-chart { block-size: 4.5rem; }
+  /* RGB: the three channels share one plot. The colours are the data (each channel's own primary),
+     not categorical slots, so they stay the same in every palette. Where channels overlap they add up
+     towards white, as in a camera or Lightroom histogram. The well is a dark island in every mode,
+     like the stage, because the plot describes the picture rather than the chrome. */
+  .gi-develop-histogram-chart {
+    --gi-channel-red: oklch(0.64 0.21 27);
+    --gi-channel-green: oklch(0.72 0.19 145);
+    --gi-channel-blue: oklch(0.62 0.19 260);
+    --gi-channel-luminance: oklch(0.82 0 0);
+    /* The stage's own neutral, so the plot and the picture sit on the same ground. */
+    --gi-stage-well: oklch(0.235 0 0);
+  }
+  .gi-develop-histogram-chart [data-histogram-channel="luminance"] { --chart-1: var(--gi-channel-luminance); }
+  .gi-develop-histogram-chart [data-histogram-channel="red"] { --chart-1: var(--gi-channel-red); }
+  .gi-develop-histogram-chart [data-histogram-channel="green"] { --chart-1: var(--gi-channel-green); }
+  .gi-develop-histogram-chart [data-histogram-channel="blue"] { --chart-1: var(--gi-channel-blue); }
+  .gi-develop-histogram-rgb { display: grid; isolation: isolate; }
+  .gi-develop-histogram-rgb > .fa-chart { grid-area: 1 / 1; mix-blend-mode: screen; }
   .gi-develop-compare { position: absolute; inset: 0; z-index: 1; background: var(--gi-stage); }
   .gi-develop-compare > .fa-compare { block-size: 100%; }
   .gi-develop-compare img { display: block; inline-size: 100%; block-size: 100%; object-fit: contain; }

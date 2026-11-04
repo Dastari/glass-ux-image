@@ -38,7 +38,7 @@ export default definePack("es", {
   contrast: "Contraste",
   saturation: "Saturación",
   warmth: "Calidez",
-  sharpen: "Enfocar",
+  sharpen: "Nitidez",
   aspectRatio: "Proporción",
   aspectFree: "Libre",
   aspectOriginal: "Original",

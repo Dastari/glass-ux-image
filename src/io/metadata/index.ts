@@ -17,7 +17,7 @@ export interface MetadataPacket {
 /** Original metadata and a common-field view, with no DOM dependency. */
 export interface ImageMetadata {
   /** Container in which the packets were read. */
-  format:RasterFormat;
+  format:RasterFormat|'avif';
   /** Original packet bytes in file order. */
   packets:MetadataPacket[];
   /** Common EXIF fields; unknown tags remain preserved in packets. */

@@ -45,5 +45,16 @@ export interface LayerFilter<P = any> {
   params: P;
 }
 
+const definitions = new WeakMap<Filter<any>, { id: string; padding: Filter<any>["padding"]; passes: Filter<any>["passes"] }>();
+
+/** Internal provenance guard: a wrapped or mutated definition must use its supplied kernel. */
+export const isFilterDefinition = (filter: Filter<any>) => {
+  const original = definitions.get(filter);
+  return original?.id === filter.id && original.padding === filter.padding && original.passes === filter.passes;
+};
+
 /** Tie a filter's parameter type to its definition. */
-export const defineFilter = <P>(filter: Filter<P>): Filter<P> => filter;
+export const defineFilter = <P>(filter: Filter<P>): Filter<P> => {
+  definitions.set(filter, { id: filter.id, padding: filter.padding, passes: filter.passes });
+  return filter;
+};

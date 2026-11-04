@@ -53,10 +53,29 @@ export function attachSessionFiles(session:EditorSession,options:SessionFilesOpt
   const refresh=()=>{delete installed.options.onProjectSave;delete installed.options.clipboard;for(const value of installed.users.values())Object.assign(installed.options,value);};refresh();
   return ()=> {installed.users.delete(own);refresh();if(!installed.users.size){installed.remove();installations.delete(session);}};
 }
-/** Read through Glass UX's shared provider contract, retaining its version check. */
-export async function readProviderImage(provider:FileProvider,file:FileStat,signal:AbortSignal):Promise<Blob> {
-  ensure(file.size!==null&&file.size>=0&&file.size<=MAX_FILE_BYTES,'Provider file has an unknown or excessive size');
-  const bytes=await provider.read(file.uri,{offset:0,length:file.size},{signal,version:file.version}); ensure(bytes.length===file.size,'Incomplete provider read'); return new Blob([bytes.slice()],{type:file.mime});
+/** Bytes asked of a provider at once; a larger file arrives in several version-pinned ranges. */
+const PROVIDER_CHUNK=4*1024*1024;
+/**
+ * Read a picture through Glass UX's shared provider contract. The listing a dialog returns may lack
+ * a size or a version, so those come from `stat`; every range then names that version, so a file
+ * changed during the read fails with `changed` rather than mixing two versions. A size the provider
+ * does not know is found by reading until a range comes back short, as the contract allows only at
+ * the end of the file.
+ */
+export async function readProviderImage(provider:FileProvider,file:Pick<FileStat,'uri'|'size'|'mime'>&{version?:FileStat['version']},signal:AbortSignal):Promise<Blob> {
+  const stat=file.version!==undefined&&file.size!==null?file:await provider.stat(file.uri,{signal});
+  const size=stat.size;
+  ensure(size===null||(size>=0&&size<=MAX_FILE_BYTES),'Provider file is too large');
+  const parts:Uint8Array[]=[];let offset=0;
+  while(size===null||offset<size) {
+    const length=size===null?PROVIDER_CHUNK:Math.min(PROVIDER_CHUNK,size-offset);
+    const bytes=await provider.read(stat.uri,{offset,length},{signal,version:stat.version});
+    ensure(bytes.length<=length,'Provider returned more than the range');
+    parts.push(bytes);offset+=bytes.length;
+    ensure(offset<=MAX_FILE_BYTES,'Provider file is too large');
+    if(bytes.length<length) {ensure(size===null,'Incomplete provider read');break;}
+  }
+  return new Blob(parts as BlobPart[],{type:stat.mime??file.mime??''});
 }
 /** Opt-in autosave subscription. No storage is opened here; the host supplies its adapter. */
 export function autosaveSession(session:EditorSession,store:AutosaveStore,id:string,onError?:(error:unknown)=>void) {

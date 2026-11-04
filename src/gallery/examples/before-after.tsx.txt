@@ -1,93 +1,40 @@
-import { type ReactNode, useEffect } from "react";
-import { SectionPage, Specimen } from "glass-ux-docs-kit/react";
-import { ImageCanvas } from "glass-ux-image/canvas";
+// Short public usage for the parts that work on an editor session. The docs kit shows each
+// `<Name>Example` as that component's Usage, in place of the section specimen and its framing.
+import { useEffect } from "react";
 import { ImageEditorProvider, useImageEditor, useSessionState } from "glass-ux-image/react";
 import type { EditorSession } from "glass-ux-image/session";
 import { BeforeAfter } from "glass-ux-image/editor";
 import { develop } from "glass-ux-image/tools/develop";
 
+// Your picture: a URL, Blob or File.
 const photo = `${import.meta.env.BASE_URL}sample.png`;
 
-/** The sample photo in a contained stage, with a panel beside it as in an editor window. */
-function Stage({
-  editor,
-  canvas,
-  bar,
-  onReady,
-  children,
-}: {
-  editor: EditorSession;
-  canvas?: ReactNode;
-  bar?: ReactNode;
-  onReady?: (editor: EditorSession) => unknown;
-  children?: ReactNode;
-}) {
+// Sample edits, so history, comparison and layer parts have something to show.
+function addEdits(editor: EditorSession) {
+  editor.run("edit.commit", {
+    change: { filters: { develop: { exposure: 0.3 } } },
+    options: { label: "Exposure" },
+  });
+  editor.run("edit.commit", {
+    change: { filters: { develop: { exposure: 0.3, shadows: 45 } } },
+    options: { label: "Shadows" },
+  });
+}
+
+export default function BeforeAfterExample() {
+  const editor = useImageEditor({ source: photo, tools: [develop] });
   const { status } = useSessionState(editor);
-  const ready = status === "ready";
+  // Once, when the photo opens: a fresh session has nothing to undo.
   useEffect(() => {
-    // Seed once, when the photo opens: a fresh session has nothing to undo.
-    if (ready && onReady && !editor.state.canUndo) void onReady(editor);
-  }, [editor, ready, onReady]);
+    if (status === "ready" && !editor.state.canUndo) void addEdits(editor);
+  }, [editor, status]);
   return (
     <ImageEditorProvider editor={editor}>
-      <div className="flex h-120 w-full min-w-0 flex-col overflow-hidden rounded-surface border border-line">
-        {bar && (
-          <div className="flex min-h-12 items-center gap-2 border-b border-line px-3 py-2">
-            {ready && bar}
-          </div>
-        )}
-        <div className="flex min-h-0 flex-1">
-          <div className="relative min-w-0 flex-1">
-            {ready && canvas ? (
-              canvas
-            ) : (
-              <ImageCanvas aria-label="Sample photo" className="absolute inset-0" />
-            )}
-          </div>
-          {children && (
-            <div className="w-80 shrink-0 overflow-y-auto border-s border-line p-4">
-              {ready ? (
-                children
-              ) : (
-                <p role="status" className="type-caption text-fg-muted">
-                  Opening sample…
-                </p>
-              )}
-            </div>
-          )}
+      <div className="flex h-120 overflow-hidden rounded-surface border border-line">
+        <div className="relative min-w-0 flex-1">
+          <BeforeAfter maxEdge={1200} />
         </div>
       </div>
     </ImageEditorProvider>
-  );
-}
-
-// Three labelled develop edits, as a person might make them.
-function addEdits(editor: EditorSession) {
-  const steps = [
-    ["Exposure", { exposure: 0.3 }],
-    ["Shadows", { exposure: 0.3, shadows: 45 }],
-    ["Temperature", { exposure: 0.3, shadows: 45, temperature: 15 }],
-  ] as const;
-  for (const [label, develop] of steps)
-    editor.run("edit.commit", { change: { filters: { develop } }, options: { label } });
-}
-
-function BeforeAfterSample() {
-  const editor = useImageEditor({ source: photo, tools: [develop] });
-  return <Stage editor={editor} canvas={<BeforeAfter maxEdge={1200} />} onReady={addEdits} />;
-}
-
-export default function Section() {
-  return (
-    <SectionPage>
-      <Specimen
-        title="Before and after"
-        description="The photo as it opened against its current edits. It reads previews only, so it never changes the recipe or the history."
-      >
-        <div data-live-demo="before-after" className="w-full">
-          <BeforeAfterSample />
-        </div>
-      </Specimen>
-    </SectionPage>
   );
 }

@@ -54,12 +54,24 @@ export function findSpotSource(surface: DabSurface, dab: Dab, params: BrushParam
   return { x: bx, y: by };
 }
 
+/** Rows of a dab's region worked between pauses in `applyDabSteps`. */
+export const DAB_ROWS_PER_STEP = 16;
 /**
  * Apply one dab to a region with a two-pixel halo. Source is frozen before any writes.
  * A sampled surface covers the offset source region for clone/heal/patch/smudge.
- * All outputs remain linear premultiplied; eraser removes pixels, not mask content.
+ * All outputs remain linear premultiplied. On a mask (coverage in alpha), the brush reveals and
+ * the eraser hides.
  */
 export function applyDab(surface: DabSurface, tool: RetouchTool, params: BrushParams, dab: Dab, workspace: DabWorkspace, sampled: DabSurface = surface, offset = params.sourceOffset ?? { x: 0, y: 0 }): void {
+  const steps = applyDabSteps(surface, tool, params, dab, workspace, sampled, offset);
+  while (!steps.next().done) { /* run to the end in one go */ }
+}
+/**
+ * `applyDab`, pausing every `DAB_ROWS_PER_STEP` rows of each pass, so a caller can split a large
+ * dab across frames. The result is identical however the steps are spread. Nothing else may use
+ * the surface, sampled surface or workspace until the generator finishes.
+ */
+export function* applyDabSteps(surface: DabSurface, tool: RetouchTool, params: BrushParams, dab: Dab, workspace: DabWorkspace, sampled: DabSurface = surface, offset = params.sourceOffset ?? { x: 0, y: 0 }): Generator<void, void, void> {
   const { width, height, data } = surface;
   workspace.ensure(data.length);
   const frozen = workspace.frozen;
@@ -77,7 +89,9 @@ export function applyDab(surface: DabSurface, tool: RetouchTool, params: BrushPa
   if (healing) {
     const u = workspace.solution, v = workspace.next, difference = workspace.difference, boundary = workspace.boundary;
     u.fill(0, 0, data.length); v.fill(0, 0, data.length);
-    for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
+    for (let y = top; y < bottom; y++) {
+      if ((y - top) % DAB_ROWS_PER_STEP === DAB_ROWS_PER_STEP - 1) yield;
+      for (let x = left; x < right; x++) {
       const gx = surface.x + x + .5, gy = surface.y + y + .5;
       const i = (y * width + x) * 4, si = index(sampled, gx + offset.x, gy + offset.y);
       boundary[i / 4] = Number(Math.hypot(gx - dab.x, gy - dab.y) >= radius - 1 || x === 0 || y === 0 || x === width - 1 || y === height - 1);
@@ -86,18 +100,24 @@ export function applyDab(surface: DabSurface, tool: RetouchTool, params: BrushPa
         difference[i + c] = (da > 0 ? frozen[i + c]! / da : 0) - (sa > 0 ? source[si + c]! / sa : 0);
         if (boundary[i / 4]) u[i + c] = v[i + c] = difference[i + c]!;
       }
+      }
     }
     for (let iteration = 0; iteration < 12; iteration++) {
-      for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
-        const i = (y * width + x) * 4;
-        if (boundary[i / 4]) continue;
-        for (let c = 0; c < 3; c++) v[i + c] = (u[i - 4 + c]! + u[i + 4 + c]! + u[i - width * 4 + c]! + u[i + width * 4 + c]! + difference[i + c]! * .02) / 4.02;
+      for (let y = top; y < bottom; y++) {
+        if ((y - top) % DAB_ROWS_PER_STEP === DAB_ROWS_PER_STEP - 1) yield;
+        for (let x = left; x < right; x++) {
+          const i = (y * width + x) * 4;
+          if (boundary[i / 4]) continue;
+          for (let c = 0; c < 3; c++) v[i + c] = (u[i - 4 + c]! + u[i + 4 + c]! + u[i - width * 4 + c]! + u[i + width * 4 + c]! + difference[i + c]! * .02) / 4.02;
+        }
       }
       u.set(v);
     }
   }
 
-  for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
+  for (let y = top; y < bottom; y++) {
+    if ((y - top) % DAB_ROWS_PER_STEP === DAB_ROWS_PER_STEP - 1) yield;
+    for (let x = left; x < right; x++) {
     const gx = x + surface.x + .5, gy = y + surface.y + .5;
     const distance = Math.hypot(gx - dab.x, gy - dab.y) / radius;
     if (distance >= 1 || (tool === 'patch' && params.selection && !inside(params.selection, gx, gy))) continue;
@@ -149,6 +169,7 @@ export function applyDab(surface: DabSurface, tool: RetouchTool, params: BrushPa
     if (tool === 'clone' || tool === 'smudge') data[i + 3] = alpha + (source[si + 3]! - alpha) * weight * (tool === 'smudge' ? strength : 1);
     // Zero alpha must have zero colour, including neighbourhood filters on transparent edges.
     if (data[i + 3] === 0) data.fill(0, i, i + 3);
+    }
   }
 }
 

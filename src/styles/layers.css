@@ -1,10 +1,56 @@
 /* Layers and text parts. Spatial transforms use physical image coordinates intentionally. */
-.gi-layers-panel { display: grid; gap: var(--space-3); min-inline-size: 0; }
-/* The list keeps one box whether it holds layers or the empty state (R9.1). */
-.gi-layers-list { block-size: 11rem; min-block-size: 5rem; display: grid; min-inline-size: 0; }
+.gi-layers-panel { display: grid; gap: var(--space-2); min-inline-size: 0; }
+/* The list is as tall as its rows, up to five, then scrolls. Rows are the Tree's two-line rows,
+   so a thumbnail, the name and its blend and opacity sit together. Empty, it is one short row (R9.1):
+   EmptyState lays out in a row below 10rem, so nothing floats in a tall box or clips at the column's end. */
+.gi-layers-list {
+  --_row: max(var(--item-h), calc(var(--type-body-line) + var(--type-caption-line) + var(--space-2)));
+  block-size: calc(var(--gi-layer-rows, 1) * var(--_row));
+  display: grid; min-inline-size: 0;
+}
+.gi-layers-list[data-empty] { block-size: var(--control-h-lg); }
 .gi-layers-list > .fa-tree, .gi-layers-list > .fa-empty { block-size: 100%; min-block-size: 0; }
+.gi-layers-list > .fa-empty .fa-empty-body { padding-inline: var(--space-1-5); }
 .gi-layers-panel > .fa-toolbar { margin-inline: calc(var(--space-1) * -1); }
 .gi-layers-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--gap-controls); }
+
+/* Thumbnails: the layer's pixels, then its mask, as in a photo editor's layer stack. */
+.gi-layer-thumbs { display: inline-flex; flex: none; gap: var(--space-1); }
+.gi-layer-thumbs[data-hidden] { opacity: .45; }
+.gi-layer-thumb {
+  --_h: calc(var(--_row) - var(--space-4));
+  position: relative; display: inline-grid; place-items: center; overflow: hidden;
+  block-size: var(--_h); inline-size: var(--_h);
+  border-radius: var(--radius-compact);
+  /* A neutral checkerboard shows transparent pixels without a colour cast. */
+  background: repeating-conic-gradient(var(--surface-3) 0 25%, var(--surface-1) 0 50%) 0 0 / var(--space-2) var(--space-2);
+  box-shadow: inset 0 0 0 var(--border-width) var(--line);
+  color: var(--fg-muted);
+}
+.gi-layer-thumb[data-part="mask"] { background: var(--surface-3); cursor: pointer; }
+/* The part taking strokes wears the accent frame. */
+.gi-layer-thumb[data-current] { box-shadow: 0 0 0 var(--border-width-strong) var(--accent); }
+.gi-layer-thumb[data-off] > * { opacity: .35; }
+.gi-layer-thumb[data-off]::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - var(--border-width)), var(--fg-muted) 0 calc(50% + var(--border-width)), transparent 0);
+}
+.gi-layer-thumb-canvas { inline-size: 100%; block-size: 100%; object-fit: contain; display: block; }
+.gi-layer-thumb-glyph { display: inline-grid; inline-size: var(--icon-md); block-size: var(--icon-md); }
+.gi-layer-thumb-glyph > .fa-icon { inline-size: 100%; block-size: 100%; }
+
+/* The selected layer's mask card. */
+.gi-layer-mask {
+  display: grid; gap: var(--space-2); padding: var(--space-2);
+  border-radius: var(--radius-control); background: var(--surface-1);
+  box-shadow: inset 0 0 0 var(--border-width) var(--line);
+}
+.gi-layer-mask-head { display: flex; align-items: center; gap: var(--space-2); min-inline-size: 0; }
+.gi-layer-mask-thumb { display: inline-flex; }
+.gi-layer-mask-thumb > .gi-layer-thumb { --_h: 2.25rem; }
+.gi-layer-mask-title { flex: 1 1 auto; min-inline-size: 0; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--weight-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gi-layer-mask[data-off] .gi-layer-mask-title { color: var(--fg-muted); }
+
 .gi-text-overlay { position: absolute; inset: 0; pointer-events: auto; }
 .gi-text-edit-wrap { max-inline-size: none; }
 .gi-text-edit-wrap textarea { min-block-size: 2lh; max-block-size: 12lh; }

@@ -80,6 +80,7 @@ export function FilesFixture() {
  ));
 }
 if(new URLSearchParams(location.search).has('files-test')) {
+ void import('./colour-proof.js');
  // The file tools remain ordinary public tools; only this demo fixture swaps their panel.
  (filesTools as ImageTool[])[0]={...filesTool,Panel:FilesFixture};
 }

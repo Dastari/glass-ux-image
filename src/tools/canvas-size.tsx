@@ -12,6 +12,7 @@ import { geometryMessages } from '../messages/geometry.js';
 import { useEditorContext, useSessionState } from '../react/session-context.js';
 import { defineTool } from '../react/tool.js';
 import { GeometryApply, GeometryNumber } from './transform-controls.js';
+import { FillEdges, fillEdgesAction, sessionHasEmptyEdges } from './fill-edges.js';
 import { anchoredCanvas, canvasFill, type CanvasAnchor } from './transform-math.js';
 export { anchoredCanvas, canvasFill, type CanvasAnchor } from './transform-math.js';
 /** Image-space anchor selection; works without an editor or session. */
@@ -58,8 +59,9 @@ function CanvasSizePanel() {
         <SettingRow className="gi-panel-setting" label={m.transparent} control={<Switch size="sm" aria-label={m.transparent} checked={!current?.fill} onCheckedChange={v => change(size, anchor, v ? null : canvasFill(colour))}/>}/>
         {current?.fill && <ColorPicker aria-label={m.fill} size="sm" alpha value={colour} onValueChange={v => { setColour(v); change(size, anchor, canvasFill(v)); }}/>}
       </PanelGroup>
+      {sessionHasEmptyEdges(s) && <PanelGroup label={m.edges}><FillEdges before={() => s.commit({}, { label: m.canvasSize })}/></PanelGroup>}
       <GeometryApply label={m.canvasSize}/>
     </div>;
 }
 /** Expand or shrink the canvas around a chosen anchor, with transparent or coloured fill. */
-export const canvasSize = defineTool({ id: 'canvas-size', group: 'geometry', messages: geometryMessages, label: m => m.canvasSize, icon: <IconExpand />, Panel: CanvasSizePanel, reset: r => ({ geometry: { ...r.geometry, canvas: null } }) });
+export const canvasSize = defineTool({ id: 'canvas-size', group: 'geometry', messages: geometryMessages, label: m => m.canvasSize, icon: <IconExpand />, Panel: CanvasSizePanel, actions: [fillEdgesAction], reset: r => ({ geometry: { ...r.geometry, canvas: null } }) });

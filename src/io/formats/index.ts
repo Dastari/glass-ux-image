@@ -1,6 +1,8 @@
 import { ascii, bounded, ensure, FileDataError, range, u16, utf8 } from './bytes.js';
 export { FileDataError } from './bytes.js';
-export type ImportFormat = 'jpeg' | 'png' | 'webp' | 'gif' | 'svg';
+/** File-picker hint only; openImage always validates byte signatures. Append `.guxi` for projects. */
+export const IMAGE_IMPORT_ACCEPT='image/*,.tif,.tiff,.psd,.heic,.heif,.cr2,.nef,.arw,.orf,.raf,.dng,.cr3';
+export type ImportFormat = 'jpeg' | 'png' | 'webp' | 'gif' | 'svg' | 'tiff' | 'psd' | 'raw' | 'heif';
 /** Byte signatures, never a filename or caller-supplied MIME type. SVG still requires sanitisation. */
 export function sniffFormat(bytes: Uint8Array): ImportFormat {
   bounded(bytes);
@@ -8,6 +10,19 @@ export function sniffFormat(bytes: Uint8Array): ImportFormat {
   if([137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v)) return 'png';
   if(ascii(bytes.subarray(0,4))==='RIFF' && ascii(bytes.subarray(8,12))==='WEBP') return 'webp';
   if(['GIF87a','GIF89a'].includes(ascii(bytes.subarray(0,6)))) return 'gif';
+  if(ascii(bytes.subarray(0,4))==='8BPS')return 'psd';
+  if(ascii(bytes.subarray(0,16))==='FUJIFILMCCD-RAW ')return 'raw';
+  const endian=ascii(bytes.subarray(0,2));
+  if(endian==='II'||endian==='MM') {
+    const magic=bytes.length>=4?u16(bytes,2,endian==='II'):0;
+    if(magic===0x4f52||magic===0x5352||ascii(bytes.subarray(8,12))==='CR\x02\0')return 'raw';
+    if(magic===42)return 'tiff';
+  }
+  if(ascii(bytes.subarray(4,8))==='ftyp') {
+    const brands=Array.from({length:Math.max(0,Math.floor(Math.min(bytes.length,32)/4)-2)},(_,i)=>ascii(bytes.subarray(8+i*4,12+i*4)));
+    if(brands.includes('crx '))return 'raw';
+    if(brands.some(b=>['heic','heix','hevc','hevx','heim','heis','mif1','msf1'].includes(b)))return 'heif';
+  }
   const text=new TextDecoder().decode(bytes.subarray(0,4096)).replace(/^\uFEFF/,'').trimStart();
   if(/^(?:<\?xml[^?]*\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg(?:\s|\/?>)/i.test(text)) return 'svg';
   throw new FileDataError('unsupported','Unrecognised image format');

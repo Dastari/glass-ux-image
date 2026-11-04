@@ -9,5 +9,6 @@ export * from "./tile-source.js";
 export * from "./viewport.js";
 export * from "./warp.js";
 export * from "./layers.js";
+export * from "./mask.js";
 export * from "./geometry-validation.js";
 export * from "./id.js";

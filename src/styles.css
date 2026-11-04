@@ -26,6 +26,18 @@
     position: absolute;
     inset: 0;
   }
+  /* Measured, never drawn: the stage less what floating panes cover. The stage is always left to
+     right, so the page's reading direction picks which covered side is which. */
+  .gi-stage-clear {
+    position: absolute;
+    inset-block: var(--pane-covered-block-start, 0px) var(--pane-covered-block-end, 0px);
+    inset-inline: var(--pane-covered-inline-start, 0px) var(--pane-covered-inline-end, 0px);
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .gi-stage[data-reading="rtl"] .gi-stage-clear {
+    inset-inline: var(--pane-covered-inline-end, 0px) var(--pane-covered-inline-start, 0px);
+  }
   .gi-stage-surface canvas {
     display: block;
     inline-size: 100%;

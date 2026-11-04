@@ -1,6 +1,6 @@
 # SessionLayersPanel
 
-Image import and baking use public session actions; the view itself remains reusable.
+Image import, masks and baking use public session actions; the view itself remains reusable.
 
 `import { SessionLayersPanel } from "glass-ux-image/panels/layers"`
 

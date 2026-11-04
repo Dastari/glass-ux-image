@@ -64,6 +64,25 @@ export const layersMessages = defineMessages("imageEditor.layers", {
   "hue": "Hue",
   "saturation": "Saturation",
   "colourMode": "Colour",
-  "luminosity": "Luminosity"
+  "luminosity": "Luminosity",
+  "mask": "Mask",
+  "addMask": "Add mask",
+  "revealAll": "Reveal all",
+  "hideAll": "Hide all",
+  "enableMask": "Enable mask",
+  "disableMask": "Disable mask",
+  "applyMask": "Apply mask",
+  "deleteMask": "Delete mask",
+  "maskActions": "Mask actions",
+  "paintOn": "Paint on",
+  "pixels": "Pixels",
+  "maskHint": "Brush reveals the layer. Eraser hides it.",
+  "hiddenLayer": "Hidden",
+  "separator": ", "
 });
 export type LayersMessages = MessageValues<typeof layersMessages.defaults>;
+
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
+  interface MessageCatalog { "imageEditor.layers": LayersMessages }
+}

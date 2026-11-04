@@ -50,12 +50,14 @@ test('a missing optional WASM asset disables AVIF without breaking native export
 });
 
 for(const type of ['image/jpeg','image/png'])for(const mode of ['preserve','strip'] as const)test(`resize DPI reaches ${type} (${mode})`,async({page})=> {await open(page);const result=await page.evaluate(({type,mode})=>window.filesProof.dpiRoundTrip(type,mode),{type,mode});expect(result.exif).toBe(mode==='preserve');expect(result.dpi?.x).toBeCloseTo(300,2);expect(result.dpi?.y).toBeCloseTo(300,2);});
-test('AVIF selection plainly warns that EXIF and other metadata are removed',async({page})=> {await open(page);const fixture=page.getByTestId('files-fixture');const format=fixture.getByRole('combobox',{name:'Format',exact:true}).first();await expect(format).toBeEnabled();await expect.poll(()=>page.evaluate(()=>window.filesProof.formats().then(f=>f['image/avif']))).toBe(true);await format.click();await page.getByRole('option',{name:'AVIF',exact:true}).click();await expect(fixture.getByRole('note').first()).toHaveText('AVIF exports remove EXIF, XMP, IPTC and ICC profiles.');});
+test('AVIF selection retains metadata choices without a stripping warning',async({page})=> {await open(page);const fixture=page.getByTestId('files-fixture');const format=fixture.getByRole('combobox',{name:'Format',exact:true}).first();await expect(format).toBeEnabled();await expect.poll(()=>page.evaluate(()=>window.filesProof.formats().then(f=>f['image/avif']))).toBe(true);await format.click();await page.getByRole('option',{name:'AVIF',exact:true}).click();await expect(fixture.getByRole('combobox',{name:'Metadata',exact:true}).first()).toBeEnabled();await expect(fixture.getByText('AVIF exports remove EXIF, XMP, IPTC and ICC profiles.')).toHaveCount(0);});
 test('the crop-only tool bundle contains no AVIF codec modules or WASM assets',async()=> {
  const {build}=await import('../apps/demo/node_modules/vite/dist/node/index.js');const {resolve}=await import('node:path');
  const result=await build({configFile:false,logLevel:'silent',build:{write:false,minify:false,lib:{entry:resolve('src/tools/crop.tsx'),formats:['es'],fileName:'crop'},rollupOptions:{external:[/^react/,/^glass-ux\//]}}});
  const output=(Array.isArray(result)?result:[result]).flatMap(r=>'output' in r?r.output:[]);
  const chunks=output.filter(o=>o.type==='chunk');expect(chunks.length).toBeGreaterThan(0);
- expect(chunks.flatMap(c=>Object.keys(c.modules)).filter(id=>id.includes('/codecs/')||id.includes('/@jsquash/')||id.includes('/wasm-feature-detect/'))).toEqual([]);
+ const eager=new Set<string>();const visit=(name:string)=>{if(eager.has(name))return;eager.add(name);const entry=chunks.find(c=>c.fileName===name);for(const dependency of entry?.imports??[])visit(dependency);};for(const entry of chunks.filter(c=>c.isEntry))visit(entry.fileName);
+ expect(chunks.filter(c=>eager.has(c.fileName)).flatMap(c=>Object.keys(c.modules)).filter(id=>id.includes('/codecs/'))).toEqual([]);
+ expect(chunks.flatMap(c=>Object.keys(c.modules)).filter(id=>id.includes('/codecs/avif')||id.includes('/@jsquash/')||id.includes('/wasm-feature-detect/'))).toEqual([]);
  expect(output.filter(o=>o.type==='asset'&&o.fileName.endsWith('.wasm'))).toEqual([]);
 });

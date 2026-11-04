@@ -3,6 +3,10 @@
 The accelerated view of the nearest editor. It fills its parent. The picture sits on a neutral
 stage in every theme and direction, so nothing around it changes how its colours read.
 
+Inside a Glass UX `PaneLayout` with overlay placement, Fit places the picture in the area the
+floating panes leave clear, read from `--pane-covered-*`. A host can set those four properties on
+any ancestor to keep its own floating content clear. Panning and zooming use the whole stage.
+
 `import { ImageCanvas } from "glass-ux-image/canvas"`
 
 [Live examples](https://dastari.github.io/glass-ux-image/components/image-canvas)

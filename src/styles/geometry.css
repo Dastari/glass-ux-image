@@ -54,3 +54,23 @@
  .gi-rotate-reading { display:flex; justify-content:space-between; margin:0; font-size:var(--type-label-size); }
  .gi-rotate-reading output { font-variant-numeric:tabular-nums; }
 }
+
+@layer components {
+ /* Perspective: the rotate overlay's marks, with guides extended faintly across the picture. */
+ .gi-perspective-sliders { display:grid; gap:var(--space-4); min-inline-size:0; }
+ .gi-perspective-grid-shade { stroke-opacity:.18; stroke-width:2; }
+ .gi-perspective-extend { fill:none; stroke:var(--gi-rotate-mark); stroke-opacity:.55; stroke-width:1; stroke-dasharray:6 5; pointer-events:none; }
+ .gi-perspective-guide[data-axis=horizontal] .gi-perspective-extend { stroke-dasharray:2 4; }
+ .gi-perspective-guide[data-drawing] .gi-rotate-measure { stroke-dasharray:none; stroke-width:2.5; }
+ .gi-perspective-end:focus-visible .gi-rotate-end-face { stroke:Highlight; stroke-width:3; }
+ .gi-perspective[data-full] .gi-rotate-surface { cursor:default; }
+ .gi-perspective-chip { transform:translate(-50%,calc(-100% - var(--space-3))); }
+ .gi-perspective-guides { display:grid; gap:var(--space-1); margin:0; padding:0; list-style:none; }
+ .gi-perspective-guides li { display:flex; align-items:center; gap:var(--space-2); min-block-size:var(--control-h-sm); padding-inline-start:var(--space-2); border-radius:var(--radius-control); background:var(--fill-muted); font-size:var(--type-label-size); }
+ .gi-perspective-guide-name { flex:1; min-inline-size:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+ /* A small glyph of the guide's axis: a plumb or a level stroke in the accent. */
+ .gi-perspective-guide-mark { flex:none; inline-size:var(--space-3); block-size:var(--space-3); background:linear-gradient(var(--accent-text),var(--accent-text)) center / 2px 100% no-repeat; }
+ .gi-perspective-guide-mark[data-axis=horizontal] { background-size:100% 2px; }
+ .gi-fill-edges { display:grid; gap:var(--space-2); justify-items:start; min-inline-size:0; }
+ .gi-fill-edges > :not(.gi-panel-hint, button) { justify-self:stretch; }
+}

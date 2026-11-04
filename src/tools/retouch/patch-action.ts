@@ -1,6 +1,6 @@
 import type { EditorSession } from '../../session/index.js';
 import type { Stroke } from '../../retouch/stroke.js';
-import { brushParams, readRetouchSettings } from './settings.js';
+import { brushParams, readPaintTarget, readRetouchSettings, targeted } from './settings.js';
 import { createId } from '../../core/id.js';
 /** Fill the chosen polygon from its source texture as one labelled, vetoable action. */
 export function applyPatch(session: EditorSession, label: string): void {
@@ -16,7 +16,7 @@ export function applyPatch(session: EditorSession, label: string): void {
     const y = top + height * row / rows;
     path.push({ x: row % 2 ? left + width : left, y }, { x: row % 2 ? left : left + width, y });
   }
-  const stroke: Stroke = { id: createId(), tool: 'patch', params: { ...brushParams(settings, centre), size, spacing: .5, hardness: 1, selection: points }, points: path };
+  const stroke: Stroke = targeted({ id: createId(), tool: 'patch' as const, params: { ...brushParams(settings, centre), size, spacing: .5, hardness: 1, selection: points }, points: path }, readPaintTarget(session));
   session.commit({ strokes: [...(session.state.recipe.strokes ?? []), stroke] }, { label });
   session.revert();
 }

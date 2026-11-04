@@ -58,3 +58,8 @@ export const developMessages = defineMessages("imageEditor.develop", {
   "error": "Preview unavailable"
 });
 export type DevelopMessages = MessageValues<typeof developMessages.defaults>;
+
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
+  interface MessageCatalog { "imageEditor.develop": DevelopMessages }
+}

@@ -104,7 +104,7 @@ for(const kit of ['basic','standard','advanced'])test(`PhotoEditor accepts ${kit
   await page.getByLabel('Open an image').setInputFiles('apps/demo/src/assets/sample.png');
   await expect(page.locator('.gi-photo-foot')).toContainText('1,500 × 1,000');
   await expect.poll(async()=>(await page.locator('.gi-stage-surface canvas').screenshot()).byteLength).toBeGreaterThan(15000);
-  const radios=page.locator('.gi-photo-side').getByRole('radiogroup',{name:'Tools',exact:true}).getByRole('radio');await expect(radios).toHaveCount(kit==='basic'?4:kit==='standard'?11:17);
+  const radios=page.locator('.gi-photo-side').getByRole('radiogroup',{name:'Tools',exact:true}).getByRole('radio');await expect(radios).toHaveCount(kit==='basic'?4:kit==='standard'?12:17);
   await radios.last().click();await expect(radios.last()).toBeChecked();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:`/tmp/gi-photo-kit-${kit}.png`});

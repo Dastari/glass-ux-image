@@ -303,7 +303,7 @@ test("mirrors its chrome for right-to-left, and leaves the picture alone", async
   const side = await page.locator(".gi-photo-side").boundingBox();
   expect(side!.x).toBeLessThan(stage!.x);
   await expect(page.locator(".gi-photo-stage")).toHaveAttribute("dir", "ltr");
-  await expect(page.getByRole("radio", { name: "قص" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "اقتصاص" })).toBeVisible();
   await page.screenshot({ path: "test-results/photo-rtl.png" });
 });
 

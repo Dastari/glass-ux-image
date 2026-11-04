@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "glass-ux/button";
+import { IMAGE_IMPORT_ACCEPT } from "glass-ux-image/io";
 import { Select } from "glass-ux/select";
 import { Surface } from "glass-ux/surface";
 import { formatBytes } from "./format";
@@ -88,7 +89,7 @@ export function EditorPage() {
         <input
           ref={input}
           type="file"
-          accept="image/*"
+          accept={IMAGE_IMPORT_ACCEPT}
           hidden
           aria-label="Open an image"
           onChange={(event) => {

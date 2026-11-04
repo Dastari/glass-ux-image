@@ -13,7 +13,7 @@ import { StatusBar } from 'glass-ux/status-bar';
 import { Surface } from 'glass-ux/surface';
 import { IconSearch, IconUndo, IconRedo } from 'glass-ux/icons';
 import { MessagesProvider, useMessages } from 'glass-ux/i18n';
-import { useAnnounce, useFocusRegionNavigation } from 'glass-ux/hooks';
+import { useAnnounce, useElementSize, useFocusRegionNavigation } from 'glass-ux/hooks';
 import { ImageCanvas, type ImageCanvasProps } from '../canvas/index.js';
 import { ImageEditorProvider, imageEditorMessages, useImageEditor, useSessionState, type ImageTool } from '../react/index.js';
 import { PhotoEditorStatus } from '../photo-editor/index.js';
@@ -103,10 +103,17 @@ export interface ImageEditorProps extends Omit<EditorSessionOptions,'source'|'to
 export interface ImageWorkspaceOptions {
   /** Include the filmstrip pane. Leave it out when there is one picture and nothing else to show there. Default true. */
   filmstrip?:boolean;
+  /**
+   * Where the library (presets, history, layers) goes: its own column at the start, or a tab beside
+   * the develop pane, which leaves the picture the width of that column. Default `column`.
+   */
+  library?:'column'|'tab';
 }
+/** Below this width, in rem, the uncontrolled default puts the library in a tab so the stage stays wide. */
+const LIBRARY_COLUMN_MIN=72;
 /** Default layout is plain data, so hosts may modify or migrate it. */
-export function createImageWorkspace({filmstrip=true}:ImageWorkspaceOptions={}):ImageWorkspace {
-  const main=row(sized(stack('left'),'15rem'),stack('stage'),sized(stack('right'),'24rem')); // tokens:allow PaneLayout serialises host-controlled pane sizes in rem.
+export function createImageWorkspace({filmstrip=true,library='column'}:ImageWorkspaceOptions={}):ImageWorkspace {
+  const main=library==='tab'?row(stack('stage'),sized(stack('right','left'),'24rem')):row(sized(stack('left'),'15rem'),stack('stage'),sized(stack('right'),'24rem')); // tokens:allow PaneLayout serialises host-controlled pane sizes in rem.
   return {mode:'docked',layout:layoutOf(filmstrip?column(main,sized(stack('bottom'),'9rem')):main)}; // tokens:allow PaneLayout serialises host-controlled pane sizes in rem.
 }
 const WorkspaceCommands=/* @__PURE__ */ createContext<(id:string)=>void>(()=>{});
@@ -154,10 +161,20 @@ function Workspace(){
   const m=useMessages(workspaceMessages,{labels}),base=useMessages(imageEditorMessages),state=useSessionState(editor);
   const root=useRef<HTMLDivElement>(null),announce=useAnnounce(),palette=useCommandPalette();
   // With a single picture and no host content, an empty "Open pictures" pane would only take space.
-  const [own,setOwn]=useState(()=>props.defaultWorkspace??createImageWorkspace({filmstrip:Boolean(props.pictures?.length)||slots.bottom!==undefined})),workspace=props.workspace??own;
+  // With neither a controlled nor a default workspace, the box picks the layout (R7.2) until someone changes it.
+  const filmstrip=Boolean(props.pictures?.length)||slots.bottom!==undefined;
+  const automatic=useRef(props.workspace===undefined&&props.defaultWorkspace===undefined);
+  const [own,setOwn]=useState(()=>props.defaultWorkspace??createImageWorkspace({filmstrip})),workspace=props.workspace??own;
+  const {width:rootWidth}=useElementSize(root);
+  useEffect(()=>{
+    if(!automatic.current||!rootWidth)return;
+    const rem=parseFloat(getComputedStyle(document.documentElement).fontSize)||16;
+    const next=createImageWorkspace({filmstrip,library:rootWidth<LIBRARY_COLUMN_MIN*rem?'tab':'column'});
+    setOwn(old=>JSON.stringify(old.layout)===JSON.stringify(next.layout)?old:{...old,layout:next.layout});
+  },[rootWidth,filmstrip]);
   const [help,setHelp]=useState(false),[names,setNames]=useState<Record<string,string>>({});
   const onLabel=useCallback((id:string,label:string)=>setNames(old=>old[id]===label?old:{...old,[id]:label}),[]);
-  const change=useCallback((next:ImageWorkspace)=>{if(props.workspace===undefined)setOwn(next);props.onWorkspaceChange?.(next);},[props.workspace,props.onWorkspaceChange]);
+  const change=useCallback((next:ImageWorkspace)=>{if(next.layout!==workspace.layout)automatic.current=false;if(props.workspace===undefined)setOwn(next);props.onWorkspaceChange?.(next);},[props.workspace,props.onWorkspaceChange,workspace.layout]);
   // Glass UX's traversal, without its own key binding: F6 stays an action the host can veto or rebind.
   const regions=useRef<ReturnType<typeof useFocusRegionNavigation>>(null!);
   regions.current=useFocusRegionNavigation({scope:root,selector:'[data-workspace-region]'});

@@ -25,7 +25,7 @@ export { EMPTY_RECIPE, normaliseRecipe, recipesEqual, type EditRecipe, type Norm
 import { EMPTY_RECIPE, normaliseRecipe, recipesEqual, type EditRecipe } from "./recipe.js";
 import type { OpenedImage } from "../io/open-image.js";
 import type { SourceStage } from "./source-stage.js";
-import { AssetStore, imageLayerKind, geometryMapping, warpSource, rectQuad, homography, workSize, createPixels, halve, coarsestLevel, type LayerKind, type LayerSpec, type Mapping, type PixelBuffer, type Warp } from "../core/index.js";
+import { AssetStore, imageLayerKind, geometryMapping, warpSource, rectQuad, homography, workSize, createPixels, halve, coarsestLevel, maskFillSource, maskedSource, type LayerKind, type LayerMask, type LayerSpec, type Mapping, type PixelBuffer, type Warp } from "../core/index.js";
 const same = recipesEqual;
 
 /** Options for an atomic history entry, including an optional replacement base. */
@@ -34,6 +34,17 @@ export interface CommitOptions {
   label?: string;
   /** Decoded replacement base. Undo/redo restore it alongside the recipe. */
   source?: OpenedImage;
+}
+
+/** One layer's sources in its own pixels: staged pixels, staged mask coverage, and what is composed. */
+export interface LayerParts {
+  readonly spec: LayerSpec;
+  /** The layer's pixels after any stages, before its mask. */
+  readonly pixels: TileSource;
+  /** The mask's coverage in alpha, or null for a layer without a mask. Present while disabled. */
+  readonly mask: TileSource | null;
+  /** What composes: pixels times an enabled mask. */
+  readonly composite: TileSource;
 }
 
 /** A labelled edit in a persistent branching history. */
@@ -176,7 +187,14 @@ const BUILT_IN: Record<string, Action> = {
   "layers.set": {run:(s,layers)=>s.commit({layers:layers as readonly LayerSpec[]})},
   "layers.add": {run:(s,layer)=>s.commit({layers:[...(s.state.draft.layers??[]),layer as LayerSpec]})},
   "layers.update": {run:(s,args)=>{const {id,patch}=args as {id:string;patch:Partial<LayerSpec>};s.commit({layers:(s.state.draft.layers??[]).map(l=>l.id===id?{...l,...patch}:l)});}},
-  "layers.remove": {run:(s,id)=>s.commit({layers:(s.state.draft.layers??[]).filter(l=>l.id!==id)})},
+  "layers.remove": {run:(s,id)=>s.commit({layers:(s.state.draft.layers??[]).filter(l=>l.id!==id),strokes:(s.state.draft.strokes??[]).filter(stroke=>stroke.layer!==id)})},
+  "layers.mask.add": {run:(s,args)=>{const {id,fill="reveal",label}=args as {id:string;fill?:LayerMask["fill"];label?:string};const layers=s.state.recipe.layers??[];
+    if(layers.some(l=>l.id===id&&!l.mask))s.commit({layers:layers.map(l=>l.id===id?{...l,mask:{fill,enabled:true}}:l)},{label});}},
+  "layers.mask.enable": {run:(s,args)=>{const {id,enabled,label}=args as {id:string;enabled:boolean;label?:string};const layers=s.state.recipe.layers??[];
+    if(layers.some(l=>l.id===id&&l.mask))s.commit({layers:layers.map(l=>l.id===id&&l.mask?{...l,mask:{...l.mask,enabled}}:l)},{label});}},
+  "layers.mask.delete": {run:(s,args)=>{const {id,label}=args as {id:string;label?:string};const {layers=[],strokes=[]}=s.state.recipe;
+    if(layers.some(l=>l.id===id&&l.mask))s.commit({layers:layers.map(l=>{if(l.id!==id)return l;const {mask:_,...rest}=l;return rest;}),strokes:strokes.filter(stroke=>!(stroke.layer===id&&stroke.mask))},{label});}},
+  "layers.mask.apply": {run:(s,args)=>s.applyLayerMask((args as {id:string}).id,args as {label?:string}),enabled:s=>s.state.status==="ready"},
   "layers.reorder": {run:(s,ids)=>s.commit({layers:(ids as string[]).map(id=>s.state.draft.layers!.find(l=>l.id===id)!)})},
   "strokes.set": {run:(s,strokes)=>s.commit({strokes:strokes as EditRecipe["strokes"]})},
   "strokes.add": {run:(s,stroke)=>s.commit({strokes:[...(s.state.draft.strokes??[]),stroke as NonNullable<EditRecipe["strokes"]>[number]]})},
@@ -229,6 +247,12 @@ export class EditorSession {
   #stageDraft?: EditRecipe;
   #staged?: TileSource;
   #shownLayers?: readonly LayerSpec[];
+  #shownLayerSources: readonly TileSource[] = [];
+  #layerDraft?: EditRecipe;
+  #layerParts = new Map<string, LayerParts>();
+  #maskBases = new Map<string, TileSource>();
+  #masked = new WeakMap<TileSource, WeakMap<TileSource, TileSource>>();
+  #kindSources = new WeakMap<LayerSpec, TileSource>();
   #shownSource?: TileSource;
   #saved: EditRecipe;
   #cache?: TileCache;
@@ -260,7 +284,7 @@ export class EditorSession {
       if (run) this.#actions.set(id, { run, ...(enabled ? { enabled } : {}) });
     }
     this.registerTools(options.tools ?? []);
-    void this.#load(options.source);
+    void this.#load(options.source,options.recipe?.layers===undefined);
   }
 
   get state() {
@@ -330,12 +354,12 @@ export class EditorSession {
     for(const cache of this.#pipelineCache.values())cache.dispose(); this.#pipelineCache.clear();
     this.#document=undefined; this.#cache=undefined; this.#original=undefined;
     for(const stage of this.#stages)stage.release?.(this);
-    this.#shownGeometry=undefined;this.#shownLayers=undefined;this.#shownSource=undefined;this.#stageDraft=undefined;this.#staged=undefined;
+    this.#shownGeometry=undefined;this.#shownLayers=undefined;this.#shownSource=undefined;this.#stageDraft=undefined; this.#layerDraft=undefined; this.#layerParts.clear(); this.#maskBases.clear(); this.#kindSources=new WeakMap(); this.#shownLayerSources=[];this.#staged=undefined;
     this.#nodes=[{id:"0",parent:null,children:[],label:"",recipe:next}];
     this.#historySources.clear(); this.#recipeSources=new WeakMap(); this.#flattenedPixels=new WeakMap(); this.#savedSource=undefined;
     this.#current="0";this.#nextHistory=1;this.#preferred.clear();this.#saved=next;
     this.#set({status:"loading",recipe:next,draft:next,sourceSize:null,size:null,canUndo:false,canRedo:false,dirty:false,save:"idle",saveProgress:null,saveError:undefined});
-    await this.#load(source);
+    await this.#load(source,recipe===EMPTY_RECIPE||recipe.layers===undefined);
     if(this.#state.status==="failed")throw this.#state.error;
   }
 
@@ -367,7 +391,7 @@ export class EditorSession {
       for (const stage of tool.stages ?? []) if(!this.#stages.some(s=>s.id===stage.id)) { this.#stages.push(stage); added=true; }
       for (const kind of tool.layerKinds ?? []) { this.#kinds.set(kind.kind,kind); added=true; }
     }
-    if (added) { this.#stageDraft=undefined; this.#sync(); }
+    if (added) { this.#stageDraft=undefined; this.#layerDraft=undefined; this.#sync(); }
   }
 
   /** The tool to return to when one finishes. */
@@ -494,12 +518,60 @@ export class EditorSession {
    */
   previewStrokes(strokes: NonNullable<EditRecipe["strokes"]>) {
     this.#state = { ...this.#state, draft: { ...this.#state.draft, strokes } };
-    if (this.#sourceFor(this.#state.draft) !== this.#shownSource) this.#sync();
+    const draft = this.#state.draft;
+    if (this.#sourceFor(draft) !== this.#shownSource || !this.#sameLayerSources(draft)) this.#sync();
   }
   /** Output document coordinates to decoded source coordinates. Null denotes a non-invertible mapping. */
   toSource(x: number,y: number) { return this.#state.sourceSize ? this.#mapping(this.#state.draft,this.#state.draft.geometry).toSource(x,y) : null; }
   /** Decoded source coordinates to output document coordinates. */
   fromSource(x: number,y: number) { return this.#state.sourceSize ? this.#mapping(this.#state.draft,this.#state.draft.geometry).fromSource(x,y) : null; }
+  /**
+   * One layer's sources in its own pixels: for thumbnails, baking or a host's own processing. With no
+   * recipe they are the live sources being shown, so treat their tiles as borrowed; with a recipe they
+   * are an independent branch. Null when the layer is not in the recipe.
+   */
+  layerSources(id: string, options: { /** Read this recipe instead of the live draft. */ recipe?: EditRecipe } = {}): LayerParts | null {
+    if(this.#state.status!=="ready") return null;
+    const recipe=options.recipe ?? this.#state.draft, spec=recipe.layers?.find(layer=>layer.id===id);
+    if(!spec) return null;
+    return options.recipe ? this.#partsFor(spec,recipe,true) : this.#layersFor(recipe).find(parts=>parts.spec.id===id) ?? null;
+  }
+  /** Output document coordinates to a layer's own pixels, as layer strokes store them. Null when unmapped. */
+  toLayer(id: string, x: number, y: number): readonly [number, number] | null {
+    const parts=this.layerSources(id); if(!parts) return null;
+    const work=this.#mapping(this.#state.draft,this.#state.draft.geometry).toWork(x,y);
+    return work && homography(parts.spec.quad,rectQuad(parts.pixels))(...work);
+  }
+  /** A layer's own pixels to output document coordinates. */
+  fromLayer(id: string, x: number, y: number): readonly [number, number] | null {
+    const parts=this.layerSources(id); if(!parts) return null;
+    const work=homography(rectQuad(parts.pixels),parts.spec.quad)(x,y);
+    return work && this.#mapping(this.#state.draft,this.#state.draft.geometry).fromWork(...work);
+  }
+  /**
+   * Bake a layer's mask into its pixels: the layer becomes a plain image layer with no mask, and its
+   * pixel and mask strokes are dropped because they are in the new pixels. One labelled undo step.
+   */
+  async applyLayerMask(id: string, options: { label?: string } = {}): Promise<void> {
+    if (!this.#acting) { await this.run("layers.mask.apply", { id, ...options }); return; }
+    const recipe=this.#state.recipe, spec=recipe.layers?.find(layer=>layer.id===id), signal=this.#open.signal;
+    if(!spec?.mask) return;
+    const { composite }=this.#partsFor(spec,recipe,true);
+    const document=createImageDocument(composite), backend=new CpuBackend();
+    try {
+      document.addLayer({source:composite});
+      const image=await composeDocument(backend,document,{signal});
+      const blob=await encodeImage(image.bytes,image.width,image.height,{type:"image/png"});
+      signal.throwIfAborted();
+      const decoded=await openImage(blob,{...this.#options.open,signal}), asset=await this.assets.add(blob,decoded);
+      signal.throwIfAborted();
+      if(this.#state.recipe!==recipe) throw new Error("Layers changed while applying the mask");
+      const { mask: _mask, data: _data, ...rest }=spec;
+      const layers=(recipe.layers ?? []).map(layer=>layer.id===id ? {...rest,kind:"image",asset} : layer);
+      // Re-enter the action boundary after the asynchronous bake, as flatten does.
+      this.run("edit.commit",{change:{layers,strokes:(recipe.strokes ?? []).filter(stroke=>stroke.layer!==id)},options:{label:options.label}});
+    } finally { document.dispose(); backend.dispose(); }
+  }
   /** A small linear-premultiplied composite, yielding between tiles. */
   async readPreview(maxEdge: number, options: { /** Render this recipe without changing the live draft. */ recipe?: EditRecipe; signal?: AbortSignal } = {}): Promise<PixelBuffer> {
     if(!this.#document) throw new Error("The picture has not loaded");
@@ -639,15 +711,25 @@ export class EditorSession {
     for(const cache of this.#pipelineCache.values()) cache.dispose();
     this.#pipelineCache.clear();
     for(const stage of this.#stages)stage.release?.(this);
-    this.#document=undefined; this.#cache=undefined; this.#staged=undefined; this.#stageDraft=undefined;
+    this.#document=undefined; this.#cache=undefined; this.#staged=undefined; this.#stageDraft=undefined; this.#layerDraft=undefined; this.#layerParts.clear(); this.#maskBases.clear(); this.#shownLayerSources=[];
     this.#original=undefined; this.#savedSource=undefined; this.#shownSource=undefined; this.#shownLayers=undefined;
   }
 
-  async #load(input: ImageInput) {
+  async #load(input: ImageInput,importLayers=true) {
     const opening=this.#open;
     try {
-      const source = await openImage(input, { signal: opening.signal, ...this.#options.open });
+      const opened = await openImage(input, { signal: opening.signal, ...this.#options.open });
       if(opening.signal.aborted)return;
+      // Import is part of opening the source, under the same intercepted action. A restored
+      // project supplies its own recipe/assets, including an intentionally empty layer list.
+      if(importLayers&&opened.importedLayers?.length) {
+        const layers=await Promise.all(opened.importedLayers.map(async layer=>({...layer.spec,asset:await this.assets.add(layer.blob,layer.source)})));
+        if(opening.signal.aborted)return;
+        const recipe=normaliseRecipe({...this.#state.recipe,layers});
+        this.#nodes[0]={...this.#nodes[0]!,recipe};this.#saved=recipe;
+        this.#set({recipe,draft:recipe});
+      }
+      const source=opened.layerBase?{...opened,...opened.layerBase}:opened;
       this.#original=source;
       this.#historySources.set("0", source); this.#recipeSources.set(this.#state.recipe, source); this.#savedSource=source;
       this.#cache = new TileCache(source, this.#tileBudget);
@@ -670,7 +752,7 @@ export class EditorSession {
       this.#pipelineCache.clear();
       this.#original=source; this.#cache=new TileCache(source, this.#tileBudget);
       this.#shownGeometry=undefined; this.#shownLayers=undefined; this.#shownSource=undefined;
-      this.#stageDraft=undefined; this.#staged=undefined;
+      this.#stageDraft=undefined; this.#layerDraft=undefined; this.#layerParts.clear(); this.#shownLayerSources=[]; this.#staged=undefined;
     }
     // A new edit makes "Saved" untrue, and a past failure no longer applies.
     this.#set({ recipe, draft: recipe, sourceSize: this.#original ? { width: this.#original.width, height: this.#original.height } : null, canUndo: this.history.current.parent !== null, canRedo: this.history.current.children.length > 0, ...(this.#state.save === "saving" ? {} : { save: "idle" as const, saveError: undefined }) });
@@ -743,8 +825,43 @@ export class EditorSession {
     if(!isolated) {this.#stageDraft=recipe;this.#staged=source;}
     return source;
   }
+  /** A layer's staged pixels, its staged mask and their product, in the layer's own pixels. */
+  #partsFor(spec: LayerSpec, recipe: EditRecipe, isolated: boolean): LayerParts {
+    const kind=this.#kinds.get(spec.kind);
+    if(!kind) throw new Error(`Unregistered layer kind: ${spec.kind}`);
+    // A spec is plain immutable data, so its kind's source is looked up once per spec object.
+    let pixels=this.#kindSources.get(spec);
+    if(!pixels) { pixels=kind.source(spec,{assets:this.assets}); this.#kindSources.set(spec,pixels); }
+    for(const stage of this.#stages) if(stage.applyLayer) pixels=stage.applyLayer(pixels,spec,recipe,this,{isolated});
+    if(!spec.mask) return {spec,pixels,mask:null,composite:pixels};
+    // One fill source per layer, fill and size, so stages can key their stores on it.
+    const key=`${spec.id}|${spec.mask.fill}|${pixels.width}x${pixels.height}`;
+    let mask=this.#maskBases.get(key);
+    if(!mask) { mask=maskFillSource(pixels,spec.mask.fill); this.#maskBases.set(key,mask); }
+    for(const stage of this.#stages) if(stage.applyLayer) mask=stage.applyLayer(mask,spec,recipe,this,{isolated,mask:true});
+    if(!spec.mask.enabled) return {spec,pixels,mask,composite:pixels};
+    if(isolated) return {spec,pixels,mask,composite:maskedSource(pixels,mask)};
+    let byMask=this.#masked.get(pixels);
+    if(!byMask) { byMask=new WeakMap(); this.#masked.set(pixels,byMask); }
+    let composite=byMask.get(mask);
+    if(!composite) { composite=maskedSource(pixels,mask); byMask.set(mask,composite); }
+    return {spec,pixels,mask,composite};
+  }
+  /** Layer parts for the live draft are kept, so stroke-only changes keep source identities. */
+  #layersFor(recipe: EditRecipe, isolated=false): LayerParts[] {
+    if(isolated) return (recipe.layers ?? []).map(spec=>this.#partsFor(spec,recipe,true));
+    if(this.#layerDraft!==recipe) {
+      this.#layerDraft=recipe;
+      this.#layerParts=new Map((recipe.layers ?? []).map(spec=>[spec.id,this.#partsFor(spec,recipe,false)]));
+    }
+    return [...this.#layerParts.values()];
+  }
+  #sameLayerSources(recipe: EditRecipe) {
+    const layers=this.#layersFor(recipe);
+    return layers.length===this.#shownLayerSources.length && layers.every((parts,i)=>parts.composite===this.#shownLayerSources[i]);
+  }
   /** A document for a recipe, sharing decoded and stage tiles. */
-  #documentFor(recipe: EditRecipe, geometry: Geometry, staged: TileSource | undefined=undefined, isolated=false) {
+  #documentFor(recipe: EditRecipe, geometry: Geometry, staged: TileSource | undefined=undefined, isolated=false, layers=this.#layersFor(recipe,isolated)) {
     staged ??= this.#sourceFor(recipe,isolated);
     const caches=new Map<TileSource, TileCache>();
     const cacheFor=(source:TileSource)=>this.#cacheFor(source,caches);
@@ -756,10 +873,7 @@ export class EditorSession {
     document.dispose=()=>{dispose();this.#releaseCaches(caches);};
     try {
     document.addLayer({id:"image",name:"Image",source,filters:this.#layerFilters(recipe)});
-    for(const spec of recipe.layers ?? []) {
-      const kind=this.#kinds.get(spec.kind);
-      if(!kind) throw new Error(`Unregistered layer kind: ${spec.kind}`);
-      const pixels=kind.source(spec,{assets:this.assets});
+    for(const {spec,composite:pixels} of layers) {
       const project=homography(spec.quad,rectQuad(pixels));
       const positioned=warpSource(cacheFor(pixels),(x,y)=>{
         const p=mapping.toWork(x,y);return p&&project(...p);
@@ -774,15 +888,15 @@ export class EditorSession {
     if(!this.#cache)return;
     const {draft,cropping}=this.#state;
     const geometry=cropping ? {...draft.geometry,crop:null} : draft.geometry;
-    const staged=this.#sourceFor(draft);
+    const staged=this.#sourceFor(draft), layers=this.#layersFor(draft);
     const key=JSON.stringify([geometry,this.#warps.map(w=>draft.filters[w.id])]);
-    if(key===this.#shownGeometry && this.#shownLayers===draft.layers && this.#shownSource===staged) {
+    if(key===this.#shownGeometry && this.#shownLayers===draft.layers && this.#shownSource===staged && this.#sameLayerSources(draft)) {
       const filters=this.#layerFilters(draft), previous=this.#document!.layers[0]!.filters;
       if(!recipesEqual(filters,previous)) this.#document!.updateLayer("image",{filters});
     } else {
-      this.#shownGeometry=key;this.#shownLayers=draft.layers;this.#shownSource=staged;
+      this.#shownGeometry=key;this.#shownLayers=draft.layers;this.#shownSource=staged;this.#shownLayerSources=layers.map(parts=>parts.composite);
       this.#document?.dispose();
-      this.#document=this.#documentFor(draft,geometry,staged);
+      this.#document=this.#documentFor(draft,geometry,staged,false,layers);
       this.#renderer?.setDocument(this.#document);
     }
     this.#set({size:geometrySize(this.#cache.source,draft.geometry)});
@@ -811,17 +925,55 @@ export class EditorSession {
   }
 
   /** Full-resolution composition shared by export and flatten; never reads viewport pixels. */
-  async #composeRecipe(recipe: EditRecipe, { signal, onProgress }: ExportOptions = {}) {
+  #composeRecipe(recipe: EditRecipe, options?: ExportOptions): Promise<Awaited<ReturnType<typeof composeDocument>> & { dpi?: number; originalMetadata?: OpenedImage['metadata'] }>;
+  #composeRecipe(recipe: EditRecipe, options: ExportOptions, working: true): Promise<{ pixels: PixelBuffer; width: number; height: number; dpi?: number; originalMetadata?: OpenedImage['metadata'] }>;
+  async #composeRecipe(recipe: EditRecipe, { signal, onProgress }: ExportOptions = {}, working = false): Promise<{ width: number; height: number; dpi?: number; originalMetadata?: OpenedImage['metadata'] } & ({ bytes: Uint8ClampedArray } | { pixels: PixelBuffer })> {
     if (this.#state.status !== "ready") throw new Error("The picture has not loaded");
     const sourceSignal = this.#open.signal;
     const lifetime = AbortSignal.any([sourceSignal, this.#baseLifetime.signal, ...(signal ? [signal] : [])]);
     lifetime.throwIfAborted();
     const source = this.#baseFor(recipe);
     const canonical = this.#flattenedPixels.get(source);
-    if (canonical && same(recipe, EMPTY_RECIPE)) { onProgress?.(1); return canonical; }
+    if (canonical && same(recipe, EMPTY_RECIPE) && !working) { onProgress?.(1); return canonical; }
     const originalMetadata = source.metadata;
     const document = this.#documentFor(recipe, recipe.geometry, undefined, true);
-    const compose = (backend: RenderBackend) => composeDocument(backend, document, { signal: lifetime, ...(onProgress ? { onProgress } : {}) });
+    const compose = async (backend: RenderBackend) => {
+      if (!working) return composeDocument(backend, document, { signal: lifetime, ...(onProgress ? { onProgress } : {}) });
+      // Profile output needs the composed floats until resizing and alpha removal finish.
+      // Use the same tile jobs as ordinary export, including the backend's worker path.
+      const { prepareTile, composePrepared } = await import('../render/compose.js');
+      const { TILE_SIZE, TILE_GUTTER, tileRect, validateImageSize } = await import('../core/index.js');
+      validateImageSize(document);
+      const pixels = createPixels(document.width, document.height);
+      const caches = new Map<TileSource, TileCache>();
+      const columns = Math.ceil(document.width / TILE_SIZE), rows = Math.ceil(document.height / TILE_SIZE);
+      let sliceStart = performance.now();
+      try {
+        for (let y = 0; y < rows; y++) for (let x = 0; x < columns; x++) {
+          lifetime.throwIfAborted();
+          const tile = { level: 0, x, y };
+          let job = prepareTile(document, tile, source => this.#cacheFor(source, caches));
+          for (let attempt = 0; !job; attempt++) {
+            await retryRead(attempt, lifetime);
+            await abortable(Promise.all([...caches.values()].map(cache => cache.idle(lifetime))), lifetime);
+            lifetime.throwIfAborted();
+            job = prepareTile(document, tile, source => this.#cacheFor(source, caches));
+          }
+          const surface = backend.compose ? await backend.compose(job, lifetime) : composePrepared(backend, job);
+          let read: PixelBuffer;
+          try { lifetime.throwIfAborted(); read = backend.read(surface); }
+          finally { backend.release(surface); }
+          const inner = tileRect(document, tile);
+          for (let row = 0; row < inner.height; row++) {
+            const from = ((row + TILE_GUTTER) * read.width + TILE_GUTTER) * 4;
+            pixels.data.set(read.data.subarray(from, from + inner.width * 4), ((inner.y + row) * pixels.width + inner.x) * 4);
+          }
+          onProgress?.((y * columns + x + 1) / (rows * columns));
+          if (performance.now() - sliceStart >= 12) { await new Promise<void>(resolve => setTimeout(resolve)); sliceStart = performance.now(); }
+        }
+        return { width: pixels.width, height: pixels.height, pixels };
+      } finally { this.#releaseCaches(caches); }
+    };
     const backend = this.#renderer?.backend;
     let fallback: CpuBackend | undefined;
     try {
@@ -836,6 +988,14 @@ export class EditorSession {
   async #render(recipe: EditRecipe, { signal, onProgress, ...encode }: EncodeOptions & ExportOptions = {}) {
     const sourceSignal = this.#open.signal;
     const lifetime = AbortSignal.any([sourceSignal, this.#baseLifetime.signal, ...(signal ? [signal] : [])]);
+    if(encode.icc) {
+      const {encodeWorkingImage}=await import('../io/encode.js');
+      const image=await this.#composeRecipe(recipe,{signal:lifetime,onProgress},true);
+      lifetime.throwIfAborted();
+      const blob=await encodeWorkingImage(image.pixels,{dpi:image.dpi,originalMetadata:image.originalMetadata,...encode});
+      lifetime.throwIfAborted();
+      return blob;
+    }
     const image = await this.#composeRecipe(recipe, { signal: lifetime, onProgress });
     lifetime.throwIfAborted();
     // Preserve the canonical export bytes for a clean flattened base, avoiding another decode /

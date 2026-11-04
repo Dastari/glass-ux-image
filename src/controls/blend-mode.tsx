@@ -19,7 +19,9 @@ export interface BlendModeSelectProps {
   /** Accessible name; defaults to the translated blend-mode label. */
   "aria-label"?: string;
 }
-const keys = ["normalMode", "multiply", "screen", "overlay", "softLight", "hardLight", "darken", "lighten", "difference", "exclusion", "colourDodge", "colourBurn", "hue", "saturation", "colourMode", "luminosity"] as const;
+/** The message key naming each blend mode, in `BLEND_MODES` order. */
+export const blendModeKeys = ["normalMode", "multiply", "screen", "overlay", "softLight", "hardLight", "darken", "lighten", "difference", "exclusion", "colourDodge", "colourBurn", "hue", "saturation", "colourMode", "luminosity"] as const;
+const keys = blendModeKeys;
 /** All sixteen linear-light blend modes. */
 export function BlendModeSelect({ value, defaultValue = "normal", onValueChange, disabled, "aria-label": label }: BlendModeSelectProps) {
   const messages = useMessages(layersMessages);

@@ -18,7 +18,7 @@ import {
   type TileSource,
   type Viewport,
 } from "../core/index.js";
-import { composeTile } from "./compose.js";
+import { composeTile, prepareTile } from "./compose.js";
 import type { Draw, RenderBackend, Surface } from "./types.js";
 
 interface Composed {
@@ -45,7 +45,7 @@ export interface RendererOptions {
   fallback?: (reason: string) => RenderBackend;
   /** Called after the backend changes, so the host can show its canvas. */
   onBackendChange?: (backend: RenderBackend) => void;
-  /** Called after each presented frame. */
+  /** Called after each renderer frame; unchanged draws need no presentation. */
   onFrame?: (stats: RendererStats) => void;
   /** Called when a source refuses a tile. */
   onError?: (error: unknown) => void;
@@ -59,7 +59,7 @@ export interface RendererStats {
   composedBytes: number;
   decodedBytes: number;
   tileReads: number;
-  /** Time spent composing in the last frame that composed anything. */
+  /** Main-thread time preparing/composing tiles in the last frame that submitted work. */
   composeMs: number;
 }
 
@@ -84,6 +84,9 @@ export class Renderer {
   #lifetime = new AbortController();
   /** A new document has nothing composed yet, so keep the old picture on screen. */
   #holding = false;
+  #inflight?: { controller: AbortController; done: Promise<void> };
+  #failure?: { error: unknown };
+  #presented?: Draw[];
 
   constructor(options: RendererOptions) {
     this.#options = options;
@@ -131,7 +134,8 @@ export class Renderer {
   /** Show this viewport from the next frame. Resizes the canvas if its size changed. */
   setView(view: Viewport) {
     const { width, height } = this.backend.canvas;
-    if (view.width !== width || view.height !== height) this.backend.resize(view.width, view.height);
+    if (view.width !== width || view.height !== height) { this.backend.resize(view.width, view.height); this.#presented = undefined; }
+    if ((this.#view.zoom >= 2) !== (view.zoom >= 2)) this.#presented = undefined;
     this.#view = view;
     this.invalidate();
   }
@@ -149,6 +153,8 @@ export class Renderer {
   }
 
   #changed(rect?: Rect) {
+    this.#cancelComposition();
+    this.#failure = undefined;
     if (rect) {
       for (const [key, entry] of this.#composed) {
         const [level,x,y]=key.split("/").map(Number) as [number,number,number];
@@ -201,14 +207,19 @@ export class Renderer {
         pending++;
         continue;
       }
+      const previousWork = this.#inflight;
       if (this.#compose(tile)) composedAny = true;
-      else pending++;
+      else {
+        pending++;
+        if (this.#inflight !== previousWork) composedAny = true;
+      }
     }
     if (composedAny) this.#composeMs = now() - start;
 
     const draws = this.#draws(tiles);
     if (draws.length > 0) this.#holding = false;
-    if (!this.#holding) {
+    if (!this.#holding && !sameDraws(this.#presented, draws)) {
+      this.#presented = draws;
       this.backend.present(draws, {
         background: this.#options.background ?? DEFAULT_BACKGROUND,
         pixelated: this.#view.zoom >= 2,
@@ -216,7 +227,7 @@ export class Renderer {
     }
     this.#trim();
     this.#options.onFrame?.(this.stats);
-    if (pending > 0) this.invalidate();
+    if (pending > 0 && !this.#failure) this.invalidate();
   }
 
   /** Wait for queued source edits, then compose everything visible, yielding between frame budgets. */
@@ -233,6 +244,15 @@ export class Renderer {
         await abortable(new Promise<void>(resolve => requestAnimationFrame(() => resolve())), this.#lifetime.signal);
       } else this.frame();
       this.#lifetime.signal.throwIfAborted();
+      if (this.#inflight) {
+        await abortable(this.#inflight.done, this.#lifetime.signal);
+        if (this.#failure) throw this.#failure.error;
+        // Headless/custom CPU composition may resolve synchronously. A microtask alone cannot
+        // yield to timers or cancellation; retain the frame budget's task boundary there too.
+        if (!animated) await new Promise<void>(resolve => setTimeout(resolve, 0));
+        continue; // Present the completed worker surface on the next budgeted frame.
+      }
+      if (this.#failure) throw this.#failure.error;
       if (this.#pendingTiles() === 0) return;
       await abortable(Promise.all([...this.#caches.values()].map((cache) => cache.idle(this.#lifetime.signal))), this.#lifetime.signal);
       if (!animated) await new Promise<void>(resolve => setTimeout(resolve, 0));
@@ -269,7 +289,9 @@ export class Renderer {
     this.#stopLost();
     this.#stopLost = backend.onLost((reason) => {
       // The surfaces went with the context, so there is nothing to release.
+      this.#cancelComposition();
       this.#composed.clear();
+      this.#presented = undefined;
       const next = this.#options.fallback?.(reason);
       if (!next) return;
       const { width, height } = this.#view;
@@ -281,7 +303,15 @@ export class Renderer {
     });
   }
 
+  #cancelComposition() {
+    this.#inflight?.controller.abort(new Error("Tile composition superseded"));
+    this.#inflight = undefined;
+  }
+
   #clear() {
+    this.#cancelComposition();
+    this.#failure = undefined;
+    this.#presented = undefined;
     for (const { surface } of this.#composed.values()) this.backend.release(surface);
     this.#composed.clear();
   }
@@ -300,15 +330,39 @@ export class Renderer {
   /** Compose one tile. False means its pixels have not arrived, and have been requested. */
   #compose(tile: TileAddress): boolean {
     const document = this.#document;
-    const surface = composeTile(this.backend, document, tile, (source) => this.#cache(source));
+    if (this.#failure || this.#inflight) return false;
+    const backend = this.backend;
+    if (backend.compose) {
+      const job = prepareTile(document, tile, source => this.#cache(source));
+      if (!job) return false;
+      const revision = document.revision, controller = new AbortController();
+      const work = { controller, done: Promise.resolve() };
+      this.#inflight = work;
+      work.done = backend.compose(job, controller.signal).then(surface => {
+        if (controller.signal.aborted || this.#disposed || this.#document !== document || document.revision !== revision || this.backend !== backend) backend.release(surface);
+        else this.#store(tile, surface);
+      }).catch(error => {
+        if (!controller.signal.aborted) { this.#failure = { error }; this.#options.onError?.(error); }
+      }).finally(() => {
+        if (this.#inflight === work) this.#inflight = undefined;
+        this.invalidate();
+      });
+      return false;
+    }
+    const surface = composeTile(backend, document, tile, source => this.#cache(source));
     if (!surface) return false;
+    this.#store(tile, surface);
+    return true;
+  }
+
+  #store(tile: TileAddress, surface: Surface) {
+    const document = this.#document;
     const inner = tileRect(document, tile);
     const key = tileKey(tile);
     const previous = this.#composed.get(key);
     if (previous) this.backend.release(previous.surface);
     this.#composed.delete(key);
     this.#composed.set(key, { surface, revision: document.revision, width: inner.width, height: inner.height, shown: this.#frames });
-    return true;
   }
 
   /** One draw for each visible tile: its own pixels, or the matching piece of a coarser tile. */
@@ -355,11 +409,24 @@ export class Renderer {
 
   #trim() {
     const budget = this.#options.composedBudget ?? 512 * 1024 * 1024;
+    const fallback = tileKey({ level: coarsestLevel(this.#document), x: 0, y: 0 });
     for (const [key, entry] of this.#composed) {
       if (this.backend.bytes <= budget) return;
-      if (entry.shown === this.#frames) continue;
+      // The mandatory fallback and visible tiles form the minimum working set.
+      if (entry.shown === this.#frames || key === fallback) continue;
       this.backend.release(entry.surface);
       this.#composed.delete(key);
     }
   }
+}
+
+/** Pending source/worker tiles must not resubmit an unchanged full viewport to the graphics process. */
+function sameDraws(previous: readonly Draw[] | undefined, next: readonly Draw[]) {
+  return previous?.length === next.length && next.every((draw, i) => {
+    const before = previous[i]!;
+    return before.surface === draw.surface && sameRect(before.source, draw.source) && sameRect(before.target, draw.target);
+  });
+}
+function sameRect(a: Rect, b: Rect) {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 }

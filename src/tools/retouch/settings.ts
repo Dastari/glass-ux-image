@@ -39,3 +39,35 @@ export function brushParams(settings: RetouchSettings, point: StrokePoint): Brus
   const target = linearColour(settings.targetColour);
   return { size: settings.size, hardness: settings.hardness, opacity: settings.opacity, flow: settings.flow, colour: linearColour(settings.colour), strength: settings.strength, tonalRange: settings.tonalRange, desaturate: settings.desaturate, tolerance: settings.tolerance, targetColour: [target[0], target[1], target[2]], ...(settings.source ? { sourceOffset: { x: settings.source.x - point.x, y: settings.source.y - point.y } } : {}) };
 }
+
+/** Where strokes land: the base picture, or a raster layer's pixels or mask. */
+export interface PaintTarget {
+  /** Layer id; absent for the base picture. */ layer?: string;
+  /** The layer's mask rather than its pixels. */ mask?: boolean;
+}
+/** The Layers panel's selection, shared through tool data so retouch needs no layers code. */
+export const SELECTED_LAYER_KEY = 'layers.selectedId';
+/** Whether the selected layer's mask, not its pixels, takes strokes. */
+export const PAINT_MASK_KEY = 'layers.paintMask';
+/** Layers that can take strokes: image layers. Text and other kinds draw themselves. */
+export const paintableLayers = (session: EditorSession) => (session.state.draft.layers ?? []).filter(layer => layer.kind === 'image');
+/** The selected image layer, or its mask when chosen and present; otherwise the base picture. */
+export function readPaintTarget(session: EditorSession): PaintTarget {
+  const id = session.state.toolData[SELECTED_LAYER_KEY], layer = paintableLayers(session).find(item => item.id === id);
+  if (!layer) return {};
+  return layer.mask && session.state.toolData[PAINT_MASK_KEY] === true ? { layer: layer.id, mask: true } : { layer: layer.id };
+}
+/** Choose where strokes land. This is selection, not an edit, so it records no history. */
+export function setPaintTarget(session: EditorSession, target: PaintTarget): void {
+  session.setToolData(SELECTED_LAYER_KEY, target.layer ?? null);
+  session.setToolData(PAINT_MASK_KEY, Boolean(target.layer && target.mask));
+}
+/** Map output document coordinates into the target's pixels, and back. */
+export function targetMapping(session: EditorSession, target: PaintTarget) {
+  return target.layer === undefined
+    ? { to: (x: number, y: number) => session.toSource(x, y), from: (x: number, y: number) => session.fromSource(x, y) }
+    : { to: (x: number, y: number) => session.toLayer(target.layer!, x, y), from: (x: number, y: number) => session.fromLayer(target.layer!, x, y) };
+}
+/** Stamp the target onto a new stroke. */
+export const targeted = <T extends object>(stroke: T, target: PaintTarget): T & PaintTarget =>
+  ({ ...stroke, ...(target.layer !== undefined ? { layer: target.layer } : {}), ...(target.mask ? { mask: true } : {}) });

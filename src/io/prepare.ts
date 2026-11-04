@@ -3,7 +3,8 @@ import { sniffFormat, gifFrameCount, rasteriseSvg, SVG_MAX_BYTES } from './forma
 import { checkImageDimensions } from './formats/dimensions.js';
 import { browserSvgBoundary } from './formats/browser.js';
 import { readMetadata } from './metadata/index.js';
-import { extractIcc } from './metadata/icc.js';
+import { extractIcc, writeIcc } from './metadata/icc.js';
+import { assemble, chunks } from './formats/container.js';
 /** Validated original source and a safe blob for native decoding. Never persists either. */
 export async function prepareImage(blob:Blob,maxPixels=64*1024*1024) {
   ensure(blob.size<=MAX_FILE_BYTES,'Image exceeds byte limit'); const bytes=bounded(new Uint8Array(await blob.arrayBuffer())); const format=sniffFormat(bytes);
@@ -11,6 +12,13 @@ export async function prepareImage(blob:Blob,maxPixels=64*1024*1024) {
   const metadata=format==='jpeg'||format==='png'||format==='webp'?readMetadata(bytes):undefined;
   const icc=metadata?await extractIcc(bytes):null;
   let decodeBlob=blob;
+  // Native colour management can clamp to sRGB before we see the samples. Strip the profile
+  // only from the decoder copy; custom matrix/TRC conversion runs before pyramid downsampling.
+  if(icc) {
+    let unlabelled=await writeIcc(bytes,null);
+    if(format==='png')unlabelled=assemble(unlabelled,chunks(unlabelled,'png').filter(c=>!['sRGB','gAMA','cHRM','cICP'].includes(c.type)).map(c=>c.raw),'png');
+    decodeBlob=new Blob([unlabelled.slice()],{type:blob.type});
+  }
   if(format==='svg') {
     bounded(bytes,SVG_MAX_BYTES);
     // SVG is parsed only by the strict browser boundary, with no network-capable elements.

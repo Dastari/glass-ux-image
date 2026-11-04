@@ -25,3 +25,19 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - run: pnpm docs:test
+  browsers:
+    # Firefox and WebKit run the cross-browser smoke spec, on whichever renderer each offers.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm demo:build
+      - run: pnpm exec playwright install --with-deps firefox webkit
+      - run: pnpm exec playwright test --project firefox --project webkit
+        env:
+          GI_BROWSERS: firefox,webkit

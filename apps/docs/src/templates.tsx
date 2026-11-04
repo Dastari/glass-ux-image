@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { IMAGE_IMPORT_ACCEPT } from "glass-ux-image/io";
 import { CodeBlock } from "glass-ux/ai/code-block";
 import { Badge } from "glass-ux/badge";
 import { Button } from "glass-ux/button";
@@ -68,7 +69,7 @@ export function OwnImageButton({ onFile }: { onFile: (file: File) => void }) {
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept={IMAGE_IMPORT_ACCEPT}
         hidden
         tabIndex={-1}
         aria-hidden="true"

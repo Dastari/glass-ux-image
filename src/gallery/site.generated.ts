@@ -7,9 +7,9 @@ import families from "./families.generated.json";
 export const site = {
   title: "Glass UX Image",
   packageName: "glass-ux-image",
-  version: "0.0.0",
+  version: "0.1.0",
   repositoryUrl: "https://github.com/Dastari/glass-ux-image",
-  docsSourceUrl: "https://github.com/Dastari/glass-ux-image/blob/v0.0.0/docs/",
+  docsSourceUrl: "https://github.com/Dastari/glass-ux-image/blob/v0.1.0/docs/",
   collections: [],
   badges: {},
   guides: [{"id":"getting-started","title":"Getting started"},{"id":"choosing-a-level","title":"Choosing a level"},{"id":"host-control","title":"Host control"},{"id":"hooks","title":"Hooks"},{"id":"headless","title":"Going headless"},{"id":"extensions","title":"Writing extensions"},{"id":"files","title":"Files and persistence"},{"id":"workspace","title":"Workspace layout and slots"},{"id":"accessibility","title":"Internationalisation and accessibility"},{"id":"performance","title":"Performance and large images"},{"id":"theming","title":"Theming with Glass UX tokens"}] as { id: string; title: string }[],

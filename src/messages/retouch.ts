@@ -48,6 +48,15 @@ export const retouchMessages = defineMessages("imageEditor.retouch", {
   "targetColour": "Target colour",
   "tolerance": "Tolerance",
   "saturate": "Saturate",
-  "desaturate": "Desaturate"
+  "desaturate": "Desaturate",
+  "paintOn": "Paint on",
+  "baseImage": "Image",
+  "maskPaintHint": "On a mask, the brush reveals and the eraser hides.",
+  layerMask: (name: string) => `${name} mask`
 });
 export type RetouchMessages = MessageValues<typeof retouchMessages.defaults>;
+
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
+  interface MessageCatalog { "imageEditor.retouch": RetouchMessages }
+}

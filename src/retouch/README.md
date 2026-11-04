@@ -3,7 +3,9 @@
 `index.ts` exports the stroke data, deterministic `strokeDabs`, the CPU kernels,
 `StrokeStore`, `createRetouchStage`, and the liquify grid and warp. Imports require
 neither React nor a DOM. Run expensive work in the host's worker. The store yields
-to the task queue between dabs after an 8 ms budget; a single dab is indivisible.
+to the task queue after an 8 ms budget, the renderer's own frame budget, between dabs and
+inside one: `applyDabSteps` pauses every sixteen rows of each pass, so a large dab spreads
+across frames with the same result (`stats.dabPauses` counts the pauses).
 
 Coordinates use pixel edges, with the first pixel centred at (.5, .5). Size is a
 source-pixel diameter. Pressure scales radius and deposition; spacing is arc length
@@ -49,17 +51,21 @@ deterministic nearby lattice using sixteen boundary samples, then runs healing.
 At edges without a valid search candidate, its zero offset leaves pixels alone.
 Patch uses the source offset and an optional source-coordinate selection polygon;
 the stroke path covers the selected area, and polygon clipping limits deposition.
-Eraser removes pixel alpha and associated colour; mask content is deferred.
+Eraser removes pixel alpha and associated colour. On a mask, coverage is alpha: the brush
+reveals and the eraser hides; colour does not matter.
 Dodge/burn tonal weights use linear luminance. Colour replacement transfers colour
 normalised by luminance to retain shading. Red-eye correction detects red-dominant
 pixels inside the brush region and replaces red with the green/blue mean.
 
 `createRetouchStage()` has the landed `SourceStage` shape without importing the
-session. It retains a store per base source, processes recognised base strokes,
-and ignores other domains and layer-targeted strokes. Stage reads await queued
+session. It keeps one store for the base picture, one for each painted layer's pixels
+(`stroke.layer`, points in the layer's own pixels) and one for each painted mask
+(`stroke.mask`), each keyed by its own source; `strokesFor` picks a store's strokes. A
+`StrokeStore` is built for one `StrokeTarget` and refuses strokes aimed elsewhere. A layer
+nobody has painted keeps its own source. `preview` reconciles every live store, and layers
+or masks that leave the recipe leave the preview set. Stage reads await queued
 reconciliation and reject if it fails. Direct store callers can catch a failed
-reconcile and still read the previous image. Layer routing belongs to later
-integration: strip the layer target before reconciling a dedicated layer store.
+reconcile and still read the previous image.
 There is no automatic subscription to changes in a mutable base source.
 
 Liquify parameters are JSON-compatible numeric arrays, never pixels. Push, twirl,
@@ -79,7 +85,11 @@ Phase 1b entries:
 - `controls/brush-cursor` exports a standalone screen-space size/hardness overlay.
 
 Pixel tools register the source stage automatically through `SessionTool.stages`.
-The pointer path uses `session.toSource`; cursor projections use `fromSource`.
+The pointer path uses `session.toSource`, or `session.toLayer` when an image layer is
+selected; cursor projections use `fromSource` or `fromLayer`. The paint target is the
+Layers panel's selection (`layers.selectedId` in tool data) and `layers.paintMask`, so the
+retouch tools import no layers code. Every pixel panel shows a Paint on choice once there are
+image layers. Liquify always warps the base.
 Appending a live stroke applies only newly spaced dabs. Pixel previews happen at most once
 per animation frame through `session.previewStrokes(strokes)`, maintaining the draft while bypassing
 actions and per-frame React notifications; pointer release commits one labelled
@@ -89,12 +99,10 @@ is stored in React. B/E/S/J select brush/eraser/clone/spot healing. Arrow keys m
 the keyboard cursor, Shift moves ten output pixels, Enter stamps; Alt+Enter and
 Alt-click choose a clone/heal/patch source. Size follows source pixels through zoom,
 rotation and resize. Patch uses a drag rectangle, with numeric alternatives in its
-panel, followed by a source point and Apply patch. The eraser is pixel-only; no
-mask selector is offered. Liquify registers its warp and commits a grid in filters,
+panel, followed by a source point and Apply patch. On a mask target the eraser hides. Liquify registers its warp and commits a grid in filters,
 never a pixel stroke. Saving, transport and persistence still belong to the host.
 
-The stage assumes an immutable decoded base and handles base strokes only. It does
-not yet route layer-targeted strokes to separate stores. The landed warp source tracks sampled source footprints and forwards local dirty
+The stage assumes immutable decoded bases, layer assets and mask fills. The landed warp source tracks sampled source footprints and forwards local dirty
 rectangles through rotation, resize and liquify. No adapter in core or session is
 needed. Mip downsampling also yields on a 4 ms budget, in eight-row chunks.
 Translations have complete coverage but have not had native review.

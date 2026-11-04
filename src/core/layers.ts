@@ -1,6 +1,7 @@
 import type { BlendMode } from "./document.js";
 import type { Quad } from "./warp.js";
 import type { TileSource } from "./tile-source.js";
+import type { LayerMask } from "./mask.js";
 
 /** Plain-data layer, positioned in work space; bottom layers come first. */
 export interface LayerSpec {
@@ -14,6 +15,8 @@ export interface LayerSpec {
   filters?: Readonly<Record<string, unknown>>;
   data?: unknown;
   asset?: string;
+  /** Optional mask over the layer, painted by strokes with `mask: true` targeting this layer. */
+  mask?: LayerMask;
 }
 /** A content-addressed blob and its optional decoded source. Hosts own transport and persistence. */
 export interface Asset { id: string; blob?: Blob; source?: TileSource }

@@ -5,3 +5,6 @@ export { createRenderBackend, type BackendOptions } from "./create.js";
 export { Renderer, type RendererOptions, type RendererStats } from "./renderer.js";
 export * from "./types.js";
 export { WebGL2Backend } from "./webgl2-backend.js";
+
+export { createCpuWorkerHandler } from "./cpu-worker-handler.js";
+export type { CpuCompositionRequest, CpuCompositionReply } from "./cpu-worker-protocol.js";

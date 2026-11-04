@@ -15,6 +15,7 @@ import { defineTool } from "../react/tool.js";
 import type { EditorSession } from "../session/index.js";
 import { geometryMessages } from "../messages/geometry.js";
 import { dragCrop, type CropHandle } from "./crop-math.js";
+import { FillEdges, fillEdgesAction, sessionHasEmptyEdges } from "./fill-edges.js";
 type AspectChoice = "free" | "original" | "square" | "fourThree" | "wide" | "custom";
 const HANDLES: Exclude<CropHandle, "move">[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 const whole = ({ width, height }: Size): Rect => ({ x: 0, y: 0, width, height });
@@ -196,6 +197,7 @@ function CropPanel() {
           <Field label={messages.height} message="auto"><NumberField aria-label={messages.height} size="sm" min={1} max={bounds.height} value={Math.round(draft.geometry.crop?.height ?? bounds.height)} onValueChange={(value) => setSize("height", value)} unit="px" steppers={false}/></Field>
         </PanelPair>
       </PanelGroup>
+      {sessionHasEmptyEdges(session) && <PanelGroup label={words.edges}><FillEdges before={() => finish(session)}/></PanelGroup>}
       <PanelActions start={recipe.geometry.crop ? <Button variant="ghost" size="sm" onClick={remove}>{messages.removeCrop}</Button> : undefined}>
         <Button variant="secondary" size="sm" onClick={cancel}>{messages.cancel}</Button>
         <Button variant="primary" size="sm" onClick={apply}>{messages.applyCrop}</Button>
@@ -212,6 +214,7 @@ export const crop = defineTool({
     shortcut: "c",
     Panel: CropPanel,
     Overlay: CropOverlay,
+    actions: [fillEdgesAction],
     reset: (recipe) => ({ geometry: { ...recipe.geometry, crop: null } }),
     enter: (session) => session.setCropping(true),
     leave(session) {

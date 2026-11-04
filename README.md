@@ -2,7 +2,17 @@
 
 Image editing components and a tiled image engine for [Glass UX](https://github.com/Dastari/glass-ux).
 Use a plain control, a photo editor, a workspace, public hooks or the headless engine. The host
-owns saving, transport and persistence. There is no published release yet.
+owns saving, transport and persistence.
+
+Install Glass UX and this package from their GitHub releases. glass-ux-image 0.1.0 needs glass-ux 0.15:
+
+```sh
+pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.15.0/glass-ux-0.15.0.tgz
+pnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.1.0/glass-ux-image-0.1.0.tgz
+```
+
+Glass UX, React and React DOM are peer dependencies, so a project that uses both packages carries one copy of
+each. Every part is its own entry, and decoders, workers and the AVIF encoder load only when used.
 
 ```tsx
 import { PhotoEditor } from 'glass-ux-image/photo-editor';
@@ -19,13 +29,13 @@ export function Photo({file,save}: {file:Blob;save:(result:EditResult)=>Promise<
 
 The [documentation site](https://dastari.github.io/glass-ux-image/) includes the component catalogue,
 standalone controls, tools, filter comparisons, kits, guides, copyable templates and the browser
-photo editing application. That site URL and the repository URL are assumed until a remote exists.
+photo editing application.
 
 - [Getting started](docs/getting-started.md), [choosing a level](docs/choosing-a-level.md) and [host control](docs/host-control.md).
 - [Hooks](docs/hooks.md), [headless processing](docs/headless.md) and [extensions](docs/extensions.md).
-- [Files and security](docs/files.md), [workspace slots](docs/workspace.md), [accessibility](docs/accessibility.md), [performance](docs/performance.md) and [theming](docs/theming.md).
+- [Files and security](docs/files.md), [import formats](docs/import-formats.md), [workspace slots](docs/workspace.md), [accessibility](docs/accessibility.md), [performance](docs/performance.md) and [theming](docs/theming.md).
 - [Generated component API](docs/api/README.md), [llms.txt](llms.txt) and adoption/extension skills in `skills/`.
-- [Proposal](PROPOSAL.md) is the design record; [stage brief](docs/stage-3-brief.md) records scope.
+- [Proposal](PROPOSAL.md) is the design record; [stage brief](docs/stage-3-brief.md) and [gaps brief](docs/gaps-brief.md) record scope.
 
 ```sh
 pnpm check          # library lint, types, unit tests and build; excludes gallery generation

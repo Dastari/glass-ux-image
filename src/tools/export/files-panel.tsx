@@ -9,6 +9,7 @@ import { useMessages } from 'glass-ux/i18n';
 import { filesMessages, type FilesMessages } from '../../messages/files.js';
 import { useImageFiles, useImageAutosave } from '../../react/files.js';
 import { readProviderImage, type SessionFilesOptions } from '../../io/session-files.js';
+import { IMAGE_IMPORT_ACCEPT } from '../../io/formats/index.js';
 import { decodeProject } from '../../io/project/async.js';
 import { listRecovery, type AutosaveStore, type RecoveryCandidate } from '../../io/autosave/index.js';
 import type { EditorSession } from '../../session/index.js';
@@ -34,7 +35,7 @@ export function FilesPanel({editor,providers=[],autosaveStore,autosaveId='docume
   const perform=(run:()=>unknown)=> {setFailed(false);void Promise.resolve().then(run).catch(onError);};
   const open=async(blob:Blob,dropped=false)=> {const signature=new Uint8Array(await blob.slice(0,4).arrayBuffer());if(signature[0]===80&&signature[1]===75)await files.openProject(blob);else if(dropped)await files.drop([blob]);else await files.open(blob);};
   return <div className="gi-panel gi-files" onPaste={event=> {if(event.clipboardData.files.length){event.preventDefault();const pasted={clipboardData:{files:Array.from(event.clipboardData.files)}};perform(()=>files.paste(pasted));}}}>
-    <FileDrop aria-label={m.drop} accept="image/*,.guxi" maxFiles={1} maxSize={256*1024*1024} onFiles={(accepted,rejected)=>{if(rejected.length)setFailed(true);if(accepted[0])perform(()=>open(accepted[0]!,true));}}/>
+    <FileDrop aria-label={m.drop} accept={`${IMAGE_IMPORT_ACCEPT},.guxi`} maxFiles={1} maxSize={256*1024*1024} onFiles={(accepted,rejected)=>{if(rejected.length)setFailed(true);if(accepted[0])perform(()=>open(accepted[0]!,true));}}/>
     <div className="gi-files-actions">
       <Button size="sm" variant="secondary" icon={<IconFolderOpen/>} onClick={()=>setBrowse(true)}>{m.browse}</Button>
       <ActionButton size="sm" variant="secondary" icon={<IconClipboard/>} pendingLabel={m.pending} successLabel={m.done} errorLabel={m.error} onError={onError} onAction={async()=>{setFailed(false);await files.paste();}}>{m.paste}</ActionButton>
@@ -42,7 +43,7 @@ export function FilesPanel({editor,providers=[],autosaveStore,autosaveId='docume
       {options.onProjectSave&&<ActionButton size="sm" pendingLabel={m.pending} successLabel={m.done} errorLabel={m.error} onError={onError} onAction={async()=>{setFailed(false);await files.saveProject();}}>{m.projectSave}</ActionButton>}
       {autosaveStore&&<ActionButton size="sm" pendingLabel={m.pending} successLabel={m.done} errorLabel={m.error} onError={onError} onAction={async()=>{await autosave.flush();setRecovery(await listRecovery(autosaveStore,decodeProject));}}>{m.autosave}</ActionButton>}
     </div>
-    <FileDialog mode="open" title={m.open} open={browse} onOpenChange={setBrowse} providers={providers} device accept="image/*,.guxi" onOpen={async(selection,{signal})=> {const first=selection.files[0];if(!first)return;if('provider' in selection)await open(await readProviderImage(selection.provider,first as import('glass-ux/file-provider').FileStat,signal));else await open(first as File);}}/>
+    <FileDialog mode="open" title={m.open} open={browse} onOpenChange={setBrowse} providers={providers} device accept={`${IMAGE_IMPORT_ACCEPT},.guxi`} onOpen={async(selection,{signal})=> {const first=selection.files[0];if(!first)return;if('provider' in selection)await open(await readProviderImage(selection.provider,first as import('glass-ux/file-provider').FileStat,signal));else await open(first as File);}}/>
     {recovery.map(candidate=><ActionButton key={candidate.id} size="sm" pendingLabel={m.pending} successLabel={m.done} errorLabel={m.error} onError={onError} onAction={async()=>{setFailed(false);await files.recover(await candidate.recover());}}>{m.recover} · {candidate.id}</ActionButton>)}
     <div className="gi-feedback" role="status"><Notice role="none" tone="danger" style={{visibility: failed ? undefined : "hidden"}}>{m.failed}</Notice></div>
   </div>;

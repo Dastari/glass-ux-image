@@ -1,5 +1,7 @@
 import type { BlendMode, FilterPass, PixelBuffer, Rect } from "../core/index.js";
 
+import type { TileComposition } from "./compose.js";
+
 /** Pixels held by a backend. Only that backend can read one. */
 export interface Surface {
   readonly width: number;
@@ -58,6 +60,8 @@ export interface RenderBackend {
   /** Lay `top` over `base` into a new surface the size of `base`. Neither input changes. */
   blend(base: Surface, top: Surface, options: BlendOptions): Surface;
   read(surface: Surface): PixelBuffer;
+  /** Optional off-thread tile composition. Its result belongs to the caller. */
+  compose?(job: TileComposition, signal?: AbortSignal): Promise<Surface>;
   /** Set the canvas's size in device pixels. */
   resize(width: number, height: number): void;
   present(draws: readonly Draw[], options: PresentOptions): void;

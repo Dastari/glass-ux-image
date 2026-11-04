@@ -17,6 +17,23 @@ export async function addImageLayer(session: EditorSession, blob: Blob, name: st
   return session.state.recipe.layers?.some(layer => layer.id === id) ? id : null;
 }
 
+/** Copy a layer above itself, with its mask and its pixel and mask strokes, as one labelled step.
+ * Returns the copy's id, or null when the host refuses it. */
+export function duplicateLayer(session: EditorSession, id: string, label: string): string | null {
+  const { layers = [], strokes = [] } = session.state.recipe, index = layers.findIndex(layer => layer.id === id);
+  if (index < 0) return null;
+  const copy: LayerSpec = { ...layers[index]!, id: createId() };
+  const copied = strokes.filter(stroke => stroke.layer === id).map(stroke => ({ ...stroke, id: createId(), layer: copy.id }));
+  session.commit({ layers: [...layers.slice(0, index + 1), copy, ...layers.slice(index + 1)], strokes: [...strokes, ...copied] }, { label });
+  return session.state.recipe.layers?.some(layer => layer.id === copy.id) ? copy.id : null;
+}
+
+/** Delete a layer and the strokes aimed at it, as one labelled step. */
+export function removeLayer(session: EditorSession, id: string, label: string): void {
+  const { layers = [], strokes = [] } = session.state.recipe;
+  session.commit({ layers: layers.filter(layer => layer.id !== id), strokes: strokes.filter(stroke => stroke.layer !== id) }, { label });
+}
+
 /** Flatten the full-resolution visible picture to a clean base through the session export path.
  * Crop, resize, filters, strokes and layers are baked; undo restores source and recipe together. */
 export async function flattenImage(session: EditorSession, label: string): Promise<void> {
@@ -76,7 +93,8 @@ export async function mergeLayerRange(session: EditorSession, id: string | null,
     if (quad.some(point => !point)) throw new Error("Layer geometry is not invertible");
     const merged: LayerSpec = { id: createId(), name: range[0]!.name, kind: "image", asset,
       visible: true, opacity: 1, blend: "normal", quad };
-    session.commit({ layers: [...layers.slice(0, start), merged, ...layers.slice(end)] }, { label });
+    // The range's strokes and masks are baked into the merged pixels.
+    session.commit({ layers: [...layers.slice(0, start), merged, ...layers.slice(end)], strokes: (recipe.strokes ?? []).filter(stroke => stroke.layer === undefined || !ids.has(stroke.layer)) }, { label });
   } finally {
     for (const cache of caches.values()) cache.dispose();
     for (const doc of [document, lower, combined, alpha]) doc.dispose();

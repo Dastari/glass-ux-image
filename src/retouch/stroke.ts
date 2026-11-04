@@ -31,7 +31,8 @@ export interface Stroke {
   /** Pixel kernel to replay. */ tool: RetouchTool;
   /** Frozen kernel settings. */ params: BrushParams;
   /** Source-coordinate path. */ points: readonly StrokePoint[];
-  /** Optional layer target; base stages ignore these. */ layer?: string;
+  /** Optional layer target, with points in that layer's pixels; base stages ignore these. */ layer?: string;
+  /** Paint the target layer's mask (coverage in alpha) rather than its pixels. */ mask?: boolean;
 }
 /** One evenly spaced, pressure-interpolated brush application. */
 export interface Dab extends StrokePoint {

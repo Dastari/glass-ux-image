@@ -79,8 +79,28 @@ import {
   siteRuntime,
 } from "glass-ux-docs-kit/react";
 import { site as generatedSite } from "../../../src/gallery/site.generated";
+/**
+ * Component pages show each part's short public example live. The site wraps every one in a marked box, so the
+ * example code stays what a reader copies while the docs tests can find each live demo.
+ */
+const loadContent = async () => {
+  const content = await generatedSite.loadContent();
+  const demoLoaders = Object.fromEntries(
+    Object.entries(content.demoLoaders).map(([path, load]) => [
+      path,
+      async () => {
+        const module = await load();
+        const Demo = module.default;
+        const name = path.replace(/^.*\/|\.[jt]sx?$/g, "");
+        return { ...module, default: () => <div data-live-demo={name} className="w-full"><Demo /></div> };
+      },
+    ]),
+  );
+  return { ...content, demoLoaders };
+};
 const site = {
   ...generatedSite,
+  loadContent,
   docsSourceUrl: null,
   loadGuide: async (id: string) => {
     const text = await generatedSite.loadGuide(id);

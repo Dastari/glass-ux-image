@@ -85,3 +85,8 @@ export const effectsMessages = defineMessages("imageEditor.effects", {
   presetHistory: "Apply preset",
 });
 export type EffectsMessages = MessageValues<typeof effectsMessages.defaults>;
+
+// Typed packs and overrides: Glass UX merges namespaces through its catalog module.
+declare module "glass-ux/i18n/catalog" {
+  interface MessageCatalog { "imageEditor.effects": EffectsMessages }
+}
