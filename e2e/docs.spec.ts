@@ -105,7 +105,7 @@ for (const mode of ["light", "dark"] as const)
         for (const id of guides) {
           const response = await page.goto(`guides/${id}/?dir=${direction}`);
           expect(response?.status()).toBe(200);
-          await expect(page.locator("h1").first()).toBeVisible();
+          await expect(page.locator("h1").first(), `guides/${id}`).toBeVisible();
         }
         await page.goto(`guides/getting-started?dir=${direction}`);
         const levelLink = page
