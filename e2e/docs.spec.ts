@@ -53,7 +53,8 @@ for (const mode of ["light", "dark"] as const)
       test("every catalogue page and live demo mounts without console errors", async ({
         page,
       }) => {
-        test.setTimeout(600_000);
+        // One test visits every page; hosted runners take about four times as long.
+        test.setTimeout(process.env.CI ? 1_800_000 : 600_000);
         const errors: string[] = [];
         page.on("pageerror", (e) => errors.push(e.message));
         page.on("console", (m) => {
@@ -87,7 +88,7 @@ for (const mode of ["light", "dark"] as const)
       test("guides, templates, deep links and accessibility", async ({
         page,
       }) => {
-        test.setTimeout(240_000);
+        test.setTimeout(process.env.CI ? 600_000 : 240_000);
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
         page.on("console", (message) => {

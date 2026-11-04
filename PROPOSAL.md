@@ -432,7 +432,9 @@ they say nothing about GPU speed.
 - **Hosted runners** ran SwiftShader 2.5 to 3 times slower than the development server, and varied run to run. The
   filter gallery's thumbnails now resample in their worker, which brought its longest frame back to the baseline's
   under a 4x CPU throttle. Frame-time limits gate on the development server and are reported, not gating, on CI
-  (`expectTiming`); readiness waits get 15 s on CI.
+  (`expectTiming`); readiness waits get 15 s on CI. On CI every timing stayed inside its limit except the filter
+  gallery's longest frame, 117 to 183 ms against 50 ms (16.8 ms here): the gallery's remaining main-thread work is
+  React rendering its sections and Glass UX measuring scroll edges as thumbnails arrive.
 - **Browsers:** Firefox runs the cross-browser smoke spec here on its CPU renderer. CI runs Firefox and WebKit on
   every push and before a release.
 - **Translations** had a model review: 272 strings in all 11 languages corrected towards standard Photoshop and
