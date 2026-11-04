@@ -7,7 +7,7 @@ Status: 0.1.0 released on 2026-11-04 on glass-ux 0.16.0; 0.2.0, the owner's work
 `apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every tool, the kits and templates, and the hooks and
 parts under them. The owner reordered the later stages on 2026-11-02: `docs/stage-3-brief.md` records that
 work and its engine contract, and `docs/gaps-brief.md` the work that closed the remaining gaps before 0.1.0. Mock-ups live in `mockups/` and
-are built with the published `glass-ux` 0.13.0 release.
+are built with the published `glass-ux` 0.16.1 release.
 
 ```sh
 cd mockups && pnpm install --ignore-workspace && pnpm dev   # http://<host>:4320/?s=docked
