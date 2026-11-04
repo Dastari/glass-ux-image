@@ -77,3 +77,37 @@ export function pointPass(id: string, frame: FilterFrame, scale: number, amount:
         }
     };
 }
+/**
+ * The sRGB transfer, used as the perceptual space for tonal decisions: posterise levels, thresholds,
+ * contrast curves and luminance differences behave as they do in Photoshop and Lightroom there, not in
+ * linear light, where most of a photograph sits in the bottom fifth of the range. Negative light is floored;
+ * values above 1 extend the same curve.
+ */
+export const encode = (v: number) => { v = Math.max(0, v); return v < .0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - .055; };
+/** Inverse of `encode`. */
+export const decode = (v: number) => { v = Math.max(0, v); return v < .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
+export const smoothstep = (a: number, b: number, x: number) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+/** Smooth value noise in [0, 1) on a document-anchored lattice, reproduced exactly in GLSL. */
+export function valueNoise(x: number, y: number, seed: number): number {
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    return mix(mix(hash(ix, iy, seed), hash(ix + 1, iy, seed), u), mix(hash(ix, iy + 1, seed), hash(ix + 1, iy + 1, seed), u), v);
+}
+/** GLSL for `encode`, `decode`, `smoothstep` (built in) and `valueNoise`; include after `common`. */
+export const perceptual = `
+vec3 encode(vec3 c){c=max(c,vec3(0));return mix(c*12.92,1.055*pow(c,vec3(1.0/2.4))-.055,step(vec3(.0031308),c));}
+vec3 decode(vec3 c){c=max(c,vec3(0));return mix(c/12.92,pow((c+.055)/1.055,vec3(2.4)),step(vec3(.04045),c));}
+float valueNoise(vec2 q, uint seed){vec2 i=floor(q),f=q-i,u=f*f*(3.0-2.0*f);ivec2 k=ivec2(i);
+ return mix(mix(noiseHash(k,seed),noiseHash(k+ivec2(1,0),seed),u.x),mix(noiseHash(k+ivec2(0,1),seed),noiseHash(k+ivec2(1,1),seed),u.x),u.y);}`;
+export const encodeColour = (c: Colour): Colour => [encode(c[0]), encode(c[1]), encode(c[2])];
+export const decodeColour = (c: Colour): Colour => [decode(c[0]), decode(c[1]), decode(c[2])];
+/** Rec. 709 weights applied to perceptual values, as image editors do for "luminosity". */
+export const lightness = luma;
+/**
+ * A point pass that works on perceptual colour `e`: `body` (GLSL) and `transform` (TypeScript) change it,
+ * and the result is decoded back to linear light and blended by amount there.
+ */
+export function tonePass(id: string, frame: FilterFrame, scale: number, amount: number, body: string, transform: (e: Colour, x: number, y: number) => Colour, uniforms: Record<string, number | readonly number[]> = {}, declarations = ''): FilterPass {
+    return pointPass(id, frame, scale, amount, `vec3 e=encode(c); ${body}\nresult=decode(e);`, (c, x, y) => decodeColour(transform(encodeColour(c), x, y)), uniforms, `${perceptual}\n${declarations}`);
+}
+/** A pass that copies its input, to save it for a later pass. */
+export const savePass = (name: string): FilterPass => ({ id: 'effects-original', save: name, uniforms: {}, glsl: 'vec4 filterPixel(ivec2 p){return texelFetch(uSource,p,0);}', cpu: (s, t) => t.data.set(s.data) });

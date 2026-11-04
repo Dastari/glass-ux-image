@@ -1,7 +1,8 @@
 import { defineWarp } from '../../core/warp.js';
 /**
  * amount=0 is identity. Wave/ripple amounts are document-pixel displacements;
- * twirl amount is radians and fisheye amount is dimensionless (clamped to ±10).
+ * twirl amount is radians and fisheye amount is dimensionless (clamped to ±10): positive bulges the
+ * centre out like a fisheye lens, negative pinches it.
  * Centre is normalised; radius/wavelength are document pixels; phase is radians.
  */
 export interface DistortionParams {
@@ -33,11 +34,11 @@ function distortion(id: string, mode: 'fisheye' | 'wave' | 'ripple' | 'twirl') {
                 const a = p.amount * falloff, c = Math.cos(a), s = Math.sin(a);
                 return [cx + dx * c - dy * s, cy + dx * s + dy * c];
             }
-            const factor = mode === 'fisheye' ? Math.exp(Math.max(-10, Math.min(10, p.amount)) * falloff) : 1 + p.amount * Math.sin(r / wavelength * Math.PI * 2 + phase) * falloff / r;
+            const factor = mode === 'fisheye' ? Math.exp(-Math.max(-10, Math.min(10, p.amount)) * falloff) : 1 + p.amount * Math.sin(r / wavelength * Math.PI * 2 + phase) * falloff / r;
             return [cx + dx * factor, cy + dy * factor];
         } });
 }
-/** Output-to-source radial lens distortion before filtering. */
+/** Output-to-source radial lens distortion before filtering; positive amounts magnify the centre. */
 export const fisheye = /* @__PURE__ */ distortion('fisheye', 'fisheye');
 /** Output-to-source sinusoidal displacement with document-pixel wavelength. */
 export const wave = /* @__PURE__ */ distortion('wave', 'wave');

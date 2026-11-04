@@ -19,8 +19,12 @@ const args = process.argv.slice(2);
 const check = args.includes("--check");
 const outIndex = args.indexOf("--out");
 const out = outIndex === -1 ? join(root, ".handoff") : resolve(args[outIndex + 1]);
-/** 0.1.0 measured 1.77 MB unpacked and 0.48 MB compressed; about 15% headroom, so growth is a decision, not drift. */
-const BUDGET = { unpacked: 2_050_000, archive: 560_000 };
+/**
+ * 0.1.0 measured 1.77 MB unpacked and 0.48 MB compressed. 0.2.0 measured 2.21 MB and 0.59 MB after the Select tool,
+ * the image information panel (142 messages in eleven languages) and the rebuilt effects: new features, not drift.
+ * About 15% headroom, so growth is a decision.
+ */
+const BUDGET = { unpacked: 2_550_000, archive: 680_000 };
 
 const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 if (!existsSync(join(root, "dist/core/index.js"))) {

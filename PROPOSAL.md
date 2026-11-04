@@ -3,7 +3,7 @@
 `glass-ux-image` is a component library that plugs into Glass UX. It is not an application. The
 full editor is one composition of its parts, and the demo site is one consumer of that composition.
 
-Status: released as 0.1.0 on 2026-11-04, on glass-ux 0.16.0. Stages 1 to 3 are built, in `src/` and
+Status: 0.1.0 released on 2026-11-04 on glass-ux 0.16.0; 0.2.0, the owner's workspace review, follows. Stages 1 to 3 are built, in `src/` and
 `apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every tool, the kits and templates, and the hooks and
 parts under them. The owner reordered the later stages on 2026-11-02: `docs/stage-3-brief.md` records that
 work and its engine contract, and `docs/gaps-brief.md` the work that closed the remaining gaps before 0.1.0. Mock-ups live in `mockups/` and
@@ -461,6 +461,50 @@ Known limits, recorded rather than open:
 - **Fill edges** holds the composed picture as floats on the main thread before transfer, 16 bytes a pixel, which
   limits very large pictures. Guides cannot be drawn from the keyboard; the sliders are the equivalent.
 - **Focus panels float in their tracks;** they are not free windows.
+
+### 0.2.0: the owner's workspace review
+
+The owner reviewed the 0.1.0 workspace on 2026-11-04 and asked for nine changes, recorded in `docs/next-brief.md`.
+Four agents built them, an independent review found six defects (all fixed with regression tests), and the lead
+integrated and tested the whole.
+
+- **Workspace chrome:** the end column's histogram and tool rail are a fixed head; only tool settings scroll, in
+  every layout including the sheet. In the workspace the rail wraps rather than folding into More
+  (`ToolRail layout="wrap"`), because a Glass UX toolbar folds a group whole (requested upstream). Undo history
+  moved to a popover on a History button beside Undo and Redo, and View > History; `HistoryPanel` stays
+  standalone. The View menu shows and hides Library, Develop and Open pictures, resets the layout, and zooms; a
+  Layer menu holds the layer commands. Each is a session action, and closed panes return to their default place
+  through `showPane`, `hidePane`, `togglePane` and `isPaneShown`. Menu rows carry each tool's icon.
+- **Transparency grid:** the stage stays solid neutral grey. Transparent pixels inside the picture's bounds show an
+  8 px light and mid-grey checkerboard, drawn by the renderer in the same frame (WebGL and CPU) and counted from
+  the picture's corner, so it stays aligned at every zoom, pan, turn and in Focus (`ImageCanvas transparencyGrid`).
+- **Select tool** (`tools/select`, V): Photoshop's Move with Auto-Select, first in the rail. Click picks the
+  topmost layer, drag moves (Shift: axis; Alt: copy), handles scale (Shift: proportions; Alt: from the centre), a
+  drag outside a corner rotates (Shift: 15°), arrows nudge, Delete removes, Escape deselects, and a double-click
+  opens text for editing. Enlarged text is re-set at its new size so it stays sharp. Each change is one undo step.
+  Move and Transform remain the numeric tools.
+- **Photoshop shortcuts** (`PHOTOSHOP_TOOL_KEYS`, `PHOTOSHOP_COMMAND_KEYS` in `glass-ux-image/editor`): tools
+  sharing a letter form a group, Shift+letter steps through it, and hosts still override any binding. In a text
+  field only modifier chords and function keys run commands. Browsers keep Ctrl+T in a tab.
+- **Image information** (`tools/info`): a standalone i button showing file, camera, exposure, lens, dates,
+  location, rights and software in Lightroom-style groups, with every EXIF, XMP and IPTC field under All fields.
+  Edits and removals are session actions stored as `recipe.metadata` and applied to copies of the source packets
+  at export when metadata is kept; the source is never changed. EXIF edits append rewritten directories so maker
+  notes and thumbnails stay put; XMP edits change only the edited properties; IPTC edits convert kept text to
+  UTF-8 when they need it. A malformed packet reads as unreadable for its family and is never edited.
+- **Effects that do what they say:** every effect, look and preset was rendered on six CC0 photographs and compared
+  with Lightroom and Photoshop. Default lengths are set for a 1000-pixel long edge and scale with the picture
+  (`REFERENCE_EDGE`, `fitEffectParams`), so gallery thumbnails are faithful miniatures. Tonal decisions use
+  perceptual values. The artistic kernels were rebuilt, and looks are built on a new `colour-grade` filter. The
+  demo's Library presets apply as an effects stack fitted to the picture.
+- **Held drafts:** a tool with a pending step (a burst of nudges or arrow-key turns) registers it with
+  `session.holdDraft`, and history commands commit it first, so Undo removes that step and not the one before.
+  Reset now clears metadata edits too.
+
+Known limits: no Hand, Zoom or Eyedropper tools yet; PhotoEditor does not cycle tool groups; Merge visible
+flattens everything below the filters; IPTC is created only where a file already has it; metadata is not read
+from TIFF, PSD, RAW or HEIF; the Before and after preview composes on the main thread and is slow on hosted
+runners. The full suite's eager code is 390 KB of its 400 KB budget.
 
 ## Decisions
 

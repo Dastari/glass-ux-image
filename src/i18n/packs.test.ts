@@ -50,9 +50,10 @@ import { effectsMessages } from "../messages/effects.js";
 import { filesMessages } from "../messages/files.js";
 import { layersMessages } from "../messages/layers.js";
 import { workspaceMessages } from "../messages/workspace.js";
+import { infoMessages } from "../messages/info.js";
 
 describe("domain packs", () => {
-  const domains = { geometry: geometryMessages, develop: developMessages, retouch: retouchMessages, effects: effectsMessages, files: filesMessages, layers: layersMessages, workspace: workspaceMessages };
+  const domains = { geometry: geometryMessages, develop: developMessages, retouch: retouchMessages, effects: effectsMessages, files: filesMessages, layers: layersMessages, workspace: workspaceMessages, info: infoMessages };
   for(const pack of packs) for(const [name, descriptor] of Object.entries(domains)) {
     it(`${pack.locale} covers ${name}, including empty domains`, () => {
       const values=(pack.messages as Record<string,Record<string,unknown>>)[`imageEditor.${name}`]!;

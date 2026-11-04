@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-const IDS = ['effects-stack', 'gaussian-blur', 'motion-blur', 'radial-blur', 'lens-blur', 'tilt-shift', 'unsharp-mask', 'high-pass', 'detail-enhancement', 'oil-painting', 'pencil-sketch', 'watercolour', 'cartoon', 'sepia', 'film-grain', 'faded', 'bloom', 'glow', 'lens-flare', 'vignette', 'pixelate', 'mosaic', 'halftone', 'add-noise', 'reduce-noise', 'remove-grain', 'posterise', 'threshold', 'solarise', 'emboss', 'lut-grading'];
+const IDS = ['effects-stack', 'gaussian-blur', 'motion-blur', 'radial-blur', 'lens-blur', 'tilt-shift', 'unsharp-mask', 'high-pass', 'detail-enhancement', 'oil-painting', 'pencil-sketch', 'watercolour', 'cartoon', 'sepia', 'film-grain', 'faded', 'bloom', 'glow', 'lens-flare', 'vignette', 'pixelate', 'mosaic', 'halftone', 'add-noise', 'reduce-noise', 'remove-grain', 'posterise', 'threshold', 'solarise', 'emboss', 'lut-grading', 'colour-grade'];
 test.beforeEach(async ({ page }) => { await page.goto('/conformance.html'); await page.waitForFunction(() => window.conformance); });
 for (const id of IDS)
     for (const level of [0, 1, 2])

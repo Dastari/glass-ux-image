@@ -5,6 +5,12 @@ import { editXmp } from './xmp.js';
 import { editExif, readExif, type ExifFields } from './tiff.js';
 export { readExif, editExif, orientationTransform } from './tiff.js';
 export type { ExifFields } from './tiff.js';
+export type { ExifIfd } from './tiff.js';
+export { readExifEntries, editExifEntries, exifTagName, isWritableExifTag, type ExifEntry, type ExifValue, type ExifEdit } from './exif-tags.js';
+export { readXmpProperties, editXmpProperties, isWritableXmpProperty, XMP_NAMESPACES, type XmpProperty, type XmpEdit } from './xmp-fields.js';
+export { readIptc, editIptc, type IptcDataset, type IptcEdit } from './iptc.js';
+export { applyMetadataEdits, listMetadata, readMetadataEntries, mergeMetadataEdits, isWritableMetadataKey, isListMetadataKey, metadataEditsEmpty, type MetadataEdits, type MetadataChange, type MetadataEntry, type MetadataEntries } from './edits.js';
+export { readFileInfo, type ImageFileInfo } from './file-info.js';
 /** An original metadata payload, with container wrapping removed where possible. */
 export interface MetadataPacket {
   /** Metadata family. */

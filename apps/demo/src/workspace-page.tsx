@@ -1,5 +1,5 @@
 import { IconSun, IconContrast, IconMoon, IconUpload } from 'glass-ux/icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from 'glass-ux/badge';
 import { Button } from 'glass-ux/button';
 import { Notice } from 'glass-ux/notice';
@@ -7,10 +7,12 @@ import { useMessages } from 'glass-ux/i18n';
 import { ImageEditorView, type OpenPicture, type ImageWorkspace } from 'glass-ux-image/editor';
 import { createEditorSession, type EditorSession } from 'glass-ux-image/session';
 import { attachSessionFiles, autosaveSession, opfsAutosaveStore, indexedDbAutosaveStore, listRecovery, decodeProject, imagesFromPaste, IMAGE_IMPORT_ACCEPT, type AutosaveStore, type RecoveryCandidate } from 'glass-ux-image/io';
-import { filesTool, exportTool, metadataTool, batchTool } from 'glass-ux-image/tools/export';
+import { filesTool, exportTool, batchTool } from 'glass-ux-image/tools/export';
+import { infoTool } from 'glass-ux-image/tools/info';
 import { standard } from 'glass-ux-image/kits/standard';
 import { advanced } from 'glass-ux-image/kits/advanced';
-import { cinematicLooks } from 'glass-ux-image/filters/effects';
+import { select } from 'glass-ux-image/tools/select';
+import { cinematicLooks, fitPreset, type EffectPictureSize } from 'glass-ux-image/filters/effects';
 import { effectsMessages } from 'glass-ux-image/messages/effects';
 import { workspaceMessages } from 'glass-ux-image/messages/workspace';
 import sampleUrl from './assets/sample.png?url';
@@ -18,7 +20,18 @@ import './workspace-page.css';
 import { createId } from "glass-ux-image/core";
 
 const shortcutOverrides={"edit.undo":"alt+z","view.pan":"p"};
-const tools=[...new Map([...standard,...advanced,filesTool,exportTool,metadataTool,batchTool].map(t=>[t.id,t])).values()];
+// Select leads, as Photoshop's Move tool does: first in the rail and active when a picture opens.
+const tools=[...new Map([select,...standard,...advanced,filesTool,exportTool,batchTool,infoTool].map(t=>[t.id,t])).values()];
+/**
+ * The Library's looks as ordered effect stacks fitted to the picture's size, so their lengths match the effects
+ * gallery's and each part shows, and can be changed, in the Effects panel.
+ */
+function useLooks(editor:EditorSession|undefined,words:{warmFilm:string;silverScreen:string;softCinema:string}){
+  const read=()=>editor?.state.size??null,[size,setSize]=useState<EffectPictureSize|null>(read);
+  useEffect(()=>{if(!editor)return;const update=()=>setSize(old=>{const next=editor.state.size;return next&&old&&next.width===old.width&&next.height===old.height?old:next??null;});update();return editor.subscribe(update);},[editor]);
+  return useMemo(()=>cinematicLooks.map((preset,index)=>({id:preset.id,icon:[<IconSun/>,<IconContrast/>,<IconMoon/>][index],label:[words.warmFilm,words.silverScreen,words.softCinema][index]!,
+    change:{filters:{'effects-stack':{entries:Object.entries(fitPreset(preset,size).filters).map(([filter,params],at)=>({id:`${preset.id}-${at}`,filter,params,strength:1}))}}}})),[size,words.warmFilm,words.silverScreen,words.softCinema]);
+}
 /** Host-only download policy; the library merely hands back blobs. */
 export function download(blob:Blob,name:string){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 /** Browser application: sessions, persistence and downloads belong here, outside the library. */
@@ -50,7 +63,7 @@ export function WorkspacePage(){
     return ()=>{active=false;for(const item of owned.values())item.dispose();owned.clear();};
   },[add,m.original]);
   useEffect(()=>{if(store)for(const item of sessions.current.values())item.startAutosave(store);},[store,pictures]);
-  const picture=pictures.find(p=>p.id===selected);
+  const picture=pictures.find(p=>p.id===selected),looks=useLooks(picture?.editor,effectsWords);
   const open=(files:readonly Blob[])=>{for(const file of files){
     const label=file instanceof File?file.name:m.original;
     if(file instanceof File&&file.name.toLowerCase().endsWith('.guxi'))void decodeProject(file).then(async project=>{const ref=project.manifest.source,source=new Blob([project.blobs.get(ref.path)!.slice()],{type:ref.mime});await add(source,label).run('file.recover',project);}).catch(()=>setFailed(true));
@@ -69,7 +82,7 @@ export function WorkspacePage(){
       {recovery[0]&&<Notice compact action={<Button size="sm" onClick={()=>void recover(recovery[0]!)}>{m.recover}</Button>}>{m.recovery}</Notice>}
       <span role="status" className="workspace-host-status"><Badge size="sm" tone={failed?'danger':store?'success':'neutral'} marker="dot">{failed?m.failed:store?m.autosave:m.noAutosave}</Badge></span>
     </div>
-    {picture&&<ImageEditorView editor={picture.editor} tools={tools} title={picture.label} shortcuts={new URLSearchParams(location.search).has("shortcuts-test")?shortcutOverrides:undefined} presets={cinematicLooks.map((preset,index)=>({id:preset.id,icon:[<IconSun/>,<IconContrast/>,<IconMoon/>][index],label:[effectsWords.warmFilm,effectsWords.silverScreen,effectsWords.softCinema][index]!,change:{filters:preset.filters}}))} pictures={pictures} selectedPictureId={selected} onSelectedPictureIdChange={setSelected} workspace={workspace} onWorkspaceChange={setWorkspace} backend={new URLSearchParams(location.search).get('backend')==='cpu'?'cpu':'auto'}/>}
+    {picture&&<ImageEditorView editor={picture.editor} tools={tools} title={picture.label} shortcuts={new URLSearchParams(location.search).has("shortcuts-test")?shortcutOverrides:undefined} presets={looks} pictures={pictures} selectedPictureId={selected} onSelectedPictureIdChange={setSelected} workspace={workspace} onWorkspaceChange={setWorkspace} backend={new URLSearchParams(location.search).get('backend')==='cpu'?'cpu':'auto'}/>}
   </div>;
 }
 declare global {interface Window {__workspaceDemo?:{pictures:OpenPicture[];selected:string|null;workspace:ImageWorkspace|undefined}}}

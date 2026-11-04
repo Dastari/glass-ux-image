@@ -16,6 +16,7 @@ export const workspaceMessages = defineMessages("imageEditor.workspace", {
   templates: "Templates", photo: "Photo editor", custom: "Custom layout", engine: "Engine",
   singleSlider: "Single adjustment", avatar: "Avatar cropper", product: "Product photo", social: "Social post",
   annotator: "Annotator", developView: "Develop view", fullSuite: "Full suite", format: "Format", demo: "Demo",
+  resetLayout: "Reset layout", showPane: (pane: string) => `Show ${pane}`, hidePane: (pane: string) => `Hide ${pane}`,
 });
 export type WorkspaceMessages = MessageValues<typeof workspaceMessages.defaults>;
 

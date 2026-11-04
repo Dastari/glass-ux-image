@@ -27,6 +27,8 @@ import type { OpenedImage } from "../io/open-image.js";
 import type { SourceStage } from "./source-stage.js";
 import { AssetStore, imageLayerKind, geometryMapping, warpSource, rectQuad, homography, workSize, createPixels, halve, coarsestLevel, maskFillSource, maskedSource, type LayerKind, type LayerMask, type LayerSpec, type Mapping, type PixelBuffer, type Warp } from "../core/index.js";
 const same = recipesEqual;
+/** Commands that move through history: a held draft is committed before them. */
+const HISTORY_ACTIONS = new Set(["edit.undo", "edit.redo", "edit.goTo", "edit.reset", "edit.restart"]);
 
 /** Options for an atomic history entry, including an optional replacement base. */
 export interface CommitOptions {
@@ -230,6 +232,7 @@ export class EditorSession {
   #nodes: HistoryNode[] = [];
   #current = "0";
   #historySources = new Map<string, OpenedImage>();
+  #heldDrafts = new Set<() => void>();
   #recipeSources = new WeakMap<EditRecipe, OpenedImage>();
   #baseLifetime = new AbortController();
   #flattenedPixels = new WeakMap<TileSource, Awaited<ReturnType<typeof composeDocument>> & { dpi?: number; originalMetadata?: OpenedImage["metadata"] }>();
@@ -319,16 +322,30 @@ export class EditorSession {
 
   /** Run an action by id, through `onAction`. Does nothing if it is missing or disabled. */
   run(id: string, args?: unknown): unknown {
+    // A draft waiting to be committed (a burst of nudges) becomes its own step before history moves.
+    if (HISTORY_ACTIONS.has(id) && this.#heldDrafts.size) for (const commit of this.#heldDrafts) commit();
     const action = this.#actions.get(id);
     if (!action || this.#hidden.has(id) || (action.enabled && !action.enabled(this))) return undefined;
     const go = (nextArgs: unknown = args) => { this.#acting++; try { return action.run(this, nextArgs); } finally { this.#acting--; } };
     return this.#options.onAction ? this.#options.onAction({ id, args }, go) : go();
   }
 
+  /**
+   * Register a draft waiting to be committed, such as a burst of arrow-key nudges that becomes one step when the
+   * keys stop. History commands (undo, redo, go to, reset, restart) run `commit` first, so Undo removes that step
+   * instead of dropping the draft and undoing the one before it. Returns a function that unregisters it.
+   */
+  holdDraft(commit: () => void): () => void {
+    this.#heldDrafts.add(commit);
+    return () => { this.#heldDrafts.delete(commit); };
+  }
+
   /** Public rendering parts for an independent batch session; no persistence or transport. */
   get renderingParts() { return {filters:[...this.#filters,...this.#warps],stages:[...this.#stages],layerKinds:[...this.#kinds.values()],assets:this.assets}; }
   /** Original source bytes and import information, retained without persistence. */
   get original() { return this.#original; }
+  /** The source as it was opened, before a flatten replaced the base. File information describes it. */
+  get openedSource() { const root = this.#nodes.find(node => node.parent === null); return (root && this.#historySources.get(root.id)) ?? this.#original; }
   /** Whether the host supplied an explicit export destination. */
   get exportable() { return Boolean(this.#options.onExport); }
   /** Deliver encoded bytes only to the host callback; no library transport or download. */
@@ -490,7 +507,8 @@ export class EditorSession {
 
   reset() {
     if(!this.#acting) return void this.run("edit.reset");
-    this.commit(EMPTY_RECIPE);
+    // The empty recipe has no metadata key, so it would leave metadata edits in the draft; clear them too.
+    this.commit({ ...EMPTY_RECIPE, metadata: undefined } as Partial<EditRecipe>);
   }
 
   rotate(direction: 1 | -1) {
@@ -647,6 +665,8 @@ export class EditorSession {
     signal.throwIfAborted();
     const decoded = await openImage(blob, { ...this.#options.open, signal });
     if (this.#state.recipe !== recipe || this.#original !== source) throw new Error("Picture changed during flatten");
+    // The flattened base carries the source's metadata, with the recipe's edits baked in like its pixels.
+    if (image.originalMetadata) decoded.metadata = image.originalMetadata;
     this.#flattenedPixels.set(decoded, image);
     // Re-enter the action boundary after the asynchronous render, before changing any state.
     this.run("edit.commit", { change: EMPTY_RECIPE, options: { label: options.label, source: decoded } });
@@ -935,7 +955,9 @@ export class EditorSession {
     const source = this.#baseFor(recipe);
     const canonical = this.#flattenedPixels.get(source);
     if (canonical && same(recipe, EMPTY_RECIPE) && !working) { onProgress?.(1); return canonical; }
-    const originalMetadata = source.metadata;
+    // Recipe metadata edits apply to the source's packets here, at export, so the source itself never changes.
+    const originalMetadata = recipe.metadata ? (await import("../io/metadata/edits.js")).applyMetadataEdits(source.metadata, recipe.metadata, source.metadata?.format === "avif" ? undefined : source.metadata?.format) : source.metadata;
+    lifetime.throwIfAborted();
     const document = this.#documentFor(recipe, recipe.geometry, undefined, true);
     const compose = async (backend: RenderBackend) => {
       if (!working) return composeDocument(backend, document, { signal: lifetime, ...(onProgress ? { onProgress } : {}) });

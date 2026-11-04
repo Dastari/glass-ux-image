@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Filter, FilterFrame } from '../../core/filter.js';
 import { createPixels, type PixelBuffer } from '../../core/pixels.js';
 import * as effects from './index.js';
-import { hash } from './shared.js';
+import { hash, encode, decode } from './shared.js';
 const identity = effects.generateLut(2, c => c);
 const cases: [
     Filter<any>,
@@ -80,7 +80,20 @@ for (const [filter, params] of cases)
                 }
         });
     });
-it('known linear-light sepia, faded, threshold and posterise values', () => { const p = createPixels(1, 1); p.data.set([.25, .125, .0625, .5]); const c = run(effects.sepia, { amount: 1 }, p); expect(c.data[0]).toBeCloseTo((.5 * .393 + .25 * .769 + .125 * .189) * .5); expect(run(effects.faded, { amount: 1 }, p).data[0]).toBeCloseTo(.24); expect(run(effects.threshold, { amount: 1, pivot: .28 }, p).data[0]).toBe(.5); expect(run(effects.posterise, { amount: 1, levels: 3 }, p).data[0]).toBe(.25); });
+it('tonal effects work on perceptual values, as image editors do', () => {
+    const p = createPixels(1, 1);
+    p.data.set([.25, .125, .0625, .5]);
+    const [r, g, b] = [.5, .25, .125].map(encode) as [number, number, number];
+    expect(run(effects.sepia, { amount: 1 }, p).data[0]).toBeCloseTo(decode(Math.min(1, r * .393 + g * .769 + b * .189)) * .5, 5);
+    const black = createPixels(1, 1);
+    black.data.set([0, 0, 0, 1]);
+    expect(run(effects.faded, { amount: 1 }, black).data[0]).toBeCloseTo(decode(.11), 5);
+    expect(run(effects.threshold, { amount: 1, pivot: .5 }, p).data[0]).toBe(.5);
+    expect(run(effects.threshold, { amount: 1, pivot: .6 }, p).data[0]).toBe(0);
+    // Three levels are perceptual 0, .5 and 1: red (perceptual .735) goes to .5, blue (.389) to .5 as well.
+    expect(run(effects.posterise, { amount: 1, levels: 3 }, p).data[0]).toBeCloseTo(decode(.5) * .5, 5);
+    expect(run(effects.posterise, { amount: 1, levels: 2 }, p).data[2]).toBe(0);
+});
 it('blur preserves constant premultiplied colours; high-pass gives mid grey', () => {
     const p = createPixels(9, 9);
     for (let i = 0; i < p.data.length; i += 4)
@@ -89,13 +102,21 @@ it('blur preserves constant premultiplied colours; high-pass gives mid grey', ()
         const out = run(filter, { amount: 1, radius: 1 }, p);
         out.data.forEach((v, i) => expect(v).toBeCloseTo(p.data[i]!, 6));
     }
-    expect(run(effects.highPass, { amount: 1, radius: 1 }, p).data[0]).toBeCloseTo(.25);
+    expect(run(effects.highPass, { amount: 1, radius: 1 }, p).data[0]).toBeCloseTo(decode(.5) * .5);
 });
 it('transparent input stays exactly transparent in every effect', () => {
     for (const [filter, params] of cases)
         expect(run(filter, { ...params, amount: 1 }, createPixels(4, 3)).data).toEqual(new Float32Array(48));
 });
-it('document-pixel radii and grain cells scale with previews', () => { const p = picture(), f = frame(p); expect(effects.motionBlur.passes({ amount: 1, radius: 20 }, .25, f)[0]!.uniforms.uRadius).toBe(5); const c = effects.addNoise.passes({ amount: 1, size: 4 }, .25, f)[0]!; expect(c.uniforms.uScale).toBe(.25); expect(c.uniforms.uSize).toBe(4); });
+it('document-pixel radii and grain cells scale with previews; sub-pixel grain averages out', () => {
+    const p = picture(), f = frame(p);
+    expect(effects.motionBlur.passes({ amount: 1, radius: 20 }, .25, f)[0]!.uniforms.uRadius).toBe(5);
+    const fine = effects.addNoise.passes({ amount: 1, size: 4 }, .25, f)[0]!, coarse = effects.addNoise.passes({ amount: 1, size: 8 }, .25, f)[0]!;
+    expect(fine.uniforms.uCell).toBe(1);
+    expect(coarse.uniforms.uCell).toBe(2);
+    expect(effects.addNoise.passes({ amount: 1, size: 1 }, .25, f)[0]!.uniforms.uGain).toBeCloseTo(fine.uniforms.uGain as number * .25);
+    expect(effects.filmGrain.passes({ amount: 1, size: 1 }, .5, f)[0]!.uniforms.uGain).toBeCloseTo(effects.filmGrain.passes({ amount: 1, size: 1 }, 1, f)[0]!.uniforms.uGain as number * .5);
+});
 it('hash has stable integer vectors and signed seed wrap', () => { expect(hash(0, 0)).toBe(0); expect(hash(1, 2, 3)).toBe(0.3663558945991099); expect(hash(-1, -2, -3)).toBe(hash(-1, -2, 4294967293)); });
 for (const warp of [effects.fisheye, effects.wave, effects.ripple, effects.twirl])
     it(`${warp.id}: neutral identity, finite deterministic mapping`, () => { const size = { width: 100, height: 80 }; expect(warp.map(23, 31, { amount: 0 }, size)).toEqual([23, 31]); const p = { amount: .7 }; expect(warp.map(23, 31, p, size)).toEqual(warp.map(23, 31, p, size)); expect(warp.map(23, 31, p, size).every(Number.isFinite)).toBe(true); expect(warp.map(50, 40, p, size).every(Number.isFinite)).toBe(true); });
@@ -119,22 +140,30 @@ it('identity and channel-swap LUTs use trilinear lookup, domains, and float32 at
     expect(Array.from(a.data.slice((1 * 9 + 2 * 3 + 0) * 4, (1 * 9 + 2 * 3 + 0) * 4 + 4))).toEqual([1, 0, .5, 1]);
 });
 it('local artistic and denoise kernels have known flat-field results', () => {
-    const p = createPixels(7, 7);
+    const p = createPixels(9, 9);
     for (let i = 0; i < p.data.length; i += 4)
         p.data.set([.125, .125, .125, .5], i);
-    for (const effect of [effects.oilPainting, effects.reduceNoise, effects.removeGrain, effects.watercolour])
-        expect(run(effect, { amount: 1, radius: 2 }, p).data[0]).toBeCloseTo(.125);
-    expect(run(effects.pencilSketch, { amount: 1 }, p).data[0]).toBeCloseTo(.5);
-    expect(run(effects.emboss, { amount: 1 }, p).data[0]).toBeCloseTo(.25);
-    expect(run(effects.cartoon, { amount: 1 }, p).data[0]).toBeCloseTo(.1);
+    for (const effect of [effects.oilPainting, effects.reduceNoise, effects.removeGrain])
+        expect(run(effect, { amount: 1, radius: 2 }, p).data[40 * 4]).toBeCloseTo(.125);
+    // Washes lighten towards the paper; a flat pencil sketch is blank paper; flat emboss is the grey plate.
+    expect(run(effects.watercolour, { amount: 1, radius: 2 }, p).data[40 * 4]).toBeGreaterThan(.125);
+    expect(run(effects.pencilSketch, { amount: 1 }, p).data[40 * 4]).toBeCloseTo(.5);
+    expect(run(effects.emboss, { amount: 1 }, p).data[40 * 4]).toBeCloseTo(decode(.5) * .5);
+    // Cartoon bands: perceptual .537 rounds to the band at .6, with no outline on a flat field.
+    expect(run(effects.cartoon, { amount: 1, radius: 2 }, p).data[40 * 4]).toBeCloseTo(decode(.6) * .5, 4);
 });
-it('pixelate and mosaic use document-aligned cell samples', () => {
-    const p = createPixels(4, 4);
-    for (let y = 0; y < 4; y++)
-        for (let x = 0; x < 4; x++)
-            p.data.set([x / 4, y / 4, 0, 1], (y * 4 + x) * 4);
-    expect(run(effects.pixelate, { amount: 1, size: 2 }, p).data[0]).toBeCloseTo(.125);
-    expect(run(effects.mosaic, { amount: 1, size: 2 }, p).data[(1 * 4 + 1) * 4]).toBeCloseTo(.1388888889);
+it('pixelate and mosaic fill document-aligned cells with one average', () => {
+    const p = createPixels(8, 8);
+    for (let y = 0; y < 8; y++)
+        for (let x = 0; x < 8; x++)
+            p.data.set([x / 8, y / 8, 0, 1], (y * 8 + x) * 4);
+    const out = run(effects.pixelate, { amount: 1, size: 4 }, p), at = (x: number, y: number) => out.data[(y * 8 + x) * 4]!;
+    expect(at(0, 0)).toBeCloseTo(at(3, 3), 6);
+    expect(at(4, 0)).toBeGreaterThan(at(3, 0));
+    expect(at(1, 1)).toBeGreaterThan(.1);
+    expect(at(1, 1)).toBeLessThan(.25);
+    const tiles = run(effects.mosaic, { amount: 1, size: 4 }, p);
+    expect(tiles.data[(1 * 8 + 1) * 4]).toBeGreaterThan(tiles.data[0]!);
 });
 it('vignette preserves the document centre and darkens edges; glow preserves alpha', () => {
     const p = createPixels(5, 5);
@@ -143,16 +172,23 @@ it('vignette preserves the document centre and darkens edges; glow preserves alp
     const v = run(effects.vignette, { amount: 1 }, p);
     expect(v.data[12 * 4]).toBe(.5);
     expect(v.data[0]).toBeLessThan(.5);
-    const g = run(effects.glow, { amount: 1, radius: 1 }, p);
-    expect(g.data[0]).toBeCloseTo(.75);
+    const q = createPixels(5, 5);
+    for (let i = 0; i < q.data.length; i += 4)
+        q.data.set([.25, .25, .25, .5], i);
+    const g = run(effects.glow, { amount: 1, radius: 1 }, q);
+    expect(g.data[0]).toBeGreaterThan(.25);
+    expect(g.data[0]).toBeLessThan(.5);
     expect(g.data[3]).toBe(.5);
 });
 it('solarise and seeded noise have known channel values', () => {
     const p = createPixels(1, 1);
     p.data.set([.4, .1, .2, .5]);
-    expect(run(effects.solarise, { amount: 1 }, p).data[0]).toBeCloseTo(.1);
+    const s = run(effects.solarise, { amount: 1 }, p);
+    expect(s.data[0]).toBeCloseTo(decode((1 - encode(.8)) / .5 * .85) * .5, 5);
+    expect(s.data[1]).toBeCloseTo(decode(encode(.2) / .5 * .85) * .5, 5);
     const out = run(effects.addNoise, { amount: 1, seed: 3 }, p);
-    expect(out.data[0]).toBeCloseTo((.8 + hash(0, 0, 3) - .5) * .5);
+    expect(out.data[0]).toBeCloseTo(decode(encode(.8) + (hash(0, 0, 3) - .5) * .2) * .5, 5);
+    expect(out.data[1]).toBeCloseTo(decode(encode(.2) + (hash(0, 0, 4) - .5) * .2) * .5, 5);
 });
 it('effects leave their input untouched', () => {
     for (const [effect, params] of cases) {

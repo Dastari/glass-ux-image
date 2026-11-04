@@ -23,11 +23,30 @@ export interface Draw {
   target: Rect;
 }
 
+/** A checkerboard under the document's bounds, so transparent pixels read as transparent, as image editors draw it. */
+export interface TransparencyGrid {
+  /** Side of one square, in CSS pixels. Default 8. */
+  size?: number;
+  /** The two squares' colours, straight sRGB 0–1. Default a light and a mid grey. */
+  colours?: readonly [readonly [number, number, number], readonly [number, number, number]];
+}
+
+/** A transparency grid as one frame draws it, resolved to the canvas. */
+export interface PresentGrid {
+  /** The document's bounds on the canvas, in device pixels, on the same rounding as the draws. */
+  rect: Rect;
+  /** Side of one square in whole device pixels. Squares count from the rectangle's corner, so they move with the picture. */
+  cell: number;
+  colours: readonly [readonly [number, number, number], readonly [number, number, number]];
+}
+
 export interface PresentOptions {
   /** Straight sRGB, 0–1, behind everything. */
   background: readonly [number, number, number];
   /** Show pixels as squares, for zoom above 100%. */
   pixelated: boolean;
+  /** Drawn over the background and under the draws. */
+  grid?: PresentGrid;
 }
 
 export type BackendKind = "webgl2" | "cpu";

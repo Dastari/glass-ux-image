@@ -89,7 +89,7 @@ test('the file reader passes Glass UX FileProvider conformance in the browser an
 
 test('the histogram overlays red, green and blue by default and offers each channel and luminance', async ({ page }) => {
   await workspace(page);
-  const histogram = page.locator('.gi-workspace-right-content > .gi-develop-histogram');
+  const histogram = page.locator('.gi-workspace-right-head > .gi-develop-histogram');
   await expect(histogram).toHaveAttribute('data-channel', 'rgb');
   const charts = histogram.locator('.fa-chart');
   await expect(charts).toHaveCount(3);
@@ -103,12 +103,12 @@ test('the histogram overlays red, green and blue by default and offers each chan
   // The well is the stage's neutral in light mode too.
   await page.goto('/?view=workspace&mode=light');
   await page.waitForFunction(() => window.__workspaceDemo?.pictures[0]?.editor.state.status === 'ready');
-  const well = await page.locator('.gi-workspace-right-content > .gi-develop-histogram > .gi-develop-histogram-chart').evaluate(e => getComputedStyle(e).backgroundColor);
+  const well = await page.locator('.gi-workspace-right-head > .gi-develop-histogram > .gi-develop-histogram-chart').evaluate(e => getComputedStyle(e).backgroundColor);
   expect(well).toMatch(/oklch\(0\.235 0 0\)|rgb\(3[0-9], 3[0-9], 3[0-9]\)/);
-  await page.locator('.gi-workspace-right-content > .gi-develop-histogram .fa-segmented-trigger').click();
+  await page.locator('.gi-workspace-right-head > .gi-develop-histogram .fa-segmented-trigger').click();
   await page.getByRole('menuitemradio', { name: 'Luminance', exact: true }).click();
-  await expect(page.locator('.gi-workspace-right-content > .gi-develop-histogram')).toHaveAttribute('data-channel', 'luminance');
-  await expect(page.locator('.gi-workspace-right-content > .gi-develop-histogram .fa-chart')).toHaveCount(1);
+  await expect(page.locator('.gi-workspace-right-head > .gi-develop-histogram')).toHaveAttribute('data-channel', 'luminance');
+  await expect(page.locator('.gi-workspace-right-head > .gi-develop-histogram .fa-chart')).toHaveCount(1);
 });
 
 test('filter thumbnails are sharp crops of the picture, and Pencil sketch shows its lines', async ({ page }) => {

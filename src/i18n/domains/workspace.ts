@@ -55,7 +55,10 @@ export const workspaceTranslations = {
     "developView": "Entwicklungsansicht",
     "fullSuite": "Alle Werkzeuge",
     "format": "Format",
-    "demo": "Demo"
+    "demo": "Demo",
+    "resetLayout": "Layout zurücksetzen",
+    "showPane": (pane: string) => `${pane} einblenden`,
+    "hidePane": (pane: string) => `${pane} ausblenden`
 },
   "es": {
     "library":"Biblioteca",
@@ -109,7 +112,10 @@ export const workspaceTranslations = {
     "developView": "Vista de revelado",
     "fullSuite": "Suite completa",
     "format": "Formato",
-    "demo": "Demo"
+    "demo": "Demo",
+    "resetLayout": "Restablecer diseño",
+    "showPane": (pane: string) => `Mostrar ${pane}`,
+    "hidePane": (pane: string) => `Ocultar ${pane}`
 },
   "fr": {
     "library":"Bibliothèque",
@@ -163,7 +169,10 @@ export const workspaceTranslations = {
     "developView": "Vue développement",
     "fullSuite": "Suite complète",
     "format": "Format",
-    "demo": "Démo"
+    "demo": "Démo",
+    "resetLayout": "Réinitialiser la disposition",
+    "showPane": (pane: string) => `Afficher ${pane}`,
+    "hidePane": (pane: string) => `Masquer ${pane}`
 },
   "it": {
     "library":"Libreria",
@@ -217,7 +226,10 @@ export const workspaceTranslations = {
     "developView": "Vista sviluppo",
     "fullSuite": "Suite completa",
     "format": "Formato",
-    "demo": "Demo"
+    "demo": "Demo",
+    "resetLayout": "Ripristina layout",
+    "showPane": (pane: string) => `Mostra ${pane}`,
+    "hidePane": (pane: string) => `Nascondi ${pane}`
 },
   "nl": {
     "library":"Bibliotheek",
@@ -271,7 +283,10 @@ export const workspaceTranslations = {
     "developView": "Ontwikkelweergave",
     "fullSuite": "Volledige suite",
     "format": "Formaat",
-    "demo": "Demo"
+    "demo": "Demo",
+    "resetLayout": "Indeling herstellen",
+    "showPane": (pane: string) => `${pane} weergeven`,
+    "hidePane": (pane: string) => `${pane} verbergen`
 },
   "pt-BR": {
     "library":"Biblioteca",
@@ -325,7 +340,10 @@ export const workspaceTranslations = {
     "developView": "Vista de revelação",
     "fullSuite": "Suíte completa",
     "format": "Formato",
-    "demo": "Demo"
+    "demo": "Demo",
+    "resetLayout": "Redefinir layout",
+    "showPane": (pane: string) => `Mostrar ${pane}`,
+    "hidePane": (pane: string) => `Ocultar ${pane}`
 },
   "ja": {
     "library":"ライブラリ",
@@ -379,7 +397,10 @@ export const workspaceTranslations = {
     "developView": "現像ビュー",
     "fullSuite": "すべてのツール",
     "format": "形式",
-    "demo": "デモ"
+    "demo": "デモ",
+    "resetLayout": "レイアウトをリセット",
+    "showPane": (pane: string) => `${pane}を表示`,
+    "hidePane": (pane: string) => `${pane}を非表示`
 },
   "ko": {
     "library":"라이브러리",
@@ -433,7 +454,10 @@ export const workspaceTranslations = {
     "developView": "현상 보기",
     "fullSuite": "전체 도구",
     "format": "형식",
-    "demo": "데모"
+    "demo": "데모",
+    "resetLayout": "레이아웃 재설정",
+    "showPane": (pane: string) => `${pane} 표시`,
+    "hidePane": (pane: string) => `${pane} 숨기기`
 },
   "zh-Hans": {
     "library":"资料库",
@@ -487,7 +511,10 @@ export const workspaceTranslations = {
     "developView": "显影视图",
     "fullSuite": "全套工具",
     "format": "格式",
-    "demo": "演示"
+    "demo": "演示",
+    "resetLayout": "重置布局",
+    "showPane": (pane: string) => `显示${pane}`,
+    "hidePane": (pane: string) => `隐藏${pane}`
 },
   "ar": {
     "library":"المكتبة",
@@ -541,7 +568,10 @@ export const workspaceTranslations = {
     "developView": "عرض التحميض",
     "fullSuite": "كل الأدوات",
     "format": "التنسيق",
-    "demo": "عرض تجريبي"
+    "demo": "عرض تجريبي",
+    "resetLayout": "إعادة تعيين التخطيط",
+    "showPane": (pane: string) => `إظهار ${pane}`,
+    "hidePane": (pane: string) => `إخفاء ${pane}`
 },
   "he": {
     "library":"ספרייה",
@@ -595,6 +625,9 @@ export const workspaceTranslations = {
     "developView": "תצוגת פיתוח",
     "fullSuite": "כל הכלים",
     "format": "פורמט",
-    "demo": "הדגמה"
+    "demo": "הדגמה",
+    "resetLayout": "איפוס הפריסה",
+    "showPane": (pane: string) => `הצגת ${pane}`,
+    "hidePane": (pane: string) => `הסתרת ${pane}`
 },
 } satisfies Record<ImageLocale, WorkspaceMessages>;

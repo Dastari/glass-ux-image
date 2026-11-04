@@ -16,7 +16,8 @@ const definitions: [
     [effects.pixelate, { amount: .8, size: 13 }], [effects.mosaic, { amount: .8, size: 13 }], [effects.halftone, { amount: .8, size: 13 }],
     [effects.addNoise, { amount: .7, seed: 2147483647 }], [effects.reduceNoise, { amount: .8, radius: 2 }], [effects.removeGrain, { amount: .8 }],
     [effects.posterise, { amount: .8, levels: 6 }], [effects.threshold, { amount: .8, pivot: .4 }], [effects.solarise, { amount: .8, pivot: .6 }], [effects.emboss, { amount: .7, radius: 2 }],
-    [effects.lutGrading, { amount: .8, lut: effects.generateLut(5, c => [c[2] ** .8, c[0] * .9, c[1] ** 1.2]) }]
+    [effects.lutGrading, { amount: .8, lut: effects.generateLut(5, c => [c[2] ** .8, c[0] * .9, c[1] ** 1.2]) }],
+    [effects.colourGrade, { amount: .9, warmth: .4, tint: -.2, mono: .3, mix: [.4, .5, .1], contrast: .5, saturation: .3, shadows: [-.03, .01, .05], highlights: [.05, .02, -.04], fade: .3 }]
 ];
 export const effectsScenes: Record<string, Scene> = Object.fromEntries(definitions.map(([filter, params], i) => [`effects: ${filter.id}`, doc => void doc.addLayer({ source: layer(100 + i, .6), filters: [{ filter, params }] })]));
 function execute(backend: RenderBackend, filter: Filter<any>, params: Record<string, unknown>, source: PixelBuffer, x: number, y: number, documentWidth: number, documentHeight: number, scale: number) {

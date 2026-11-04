@@ -20,11 +20,12 @@ const decode = (n: number) => n <= .04045 ? n / 12.92 : ((n + .055) / 1.055) ** 
 const encode = (n: number) => Math.round(Math.min(1, n <= .0031308 ? n * 12.92 : 1.055 * n ** (1 / 2.4) - .055) * 255);
 test.use({ viewport: { width: 1440, height: 1000 } });
 for (const backend of ['auto', 'cpu'])
-    test(`${backend}: saves linear sepia, stacks duplicate effects, orders, changes strength and removes with undo`, async ({ page }) => {
+    test(`${backend}: saves perceptual sepia, stacks duplicate effects, orders, changes strength and removes with undo`, async ({ page }) => {
         await open(page, backend);
         await page.getByRole('radiogroup', { name: 'Vintage', exact: true }).getByRole('radio', { name: 'Sepia', exact: true }).click();
         const saved = await save(page);
-        const c = [128, 64, 32].map(n => decode(n / 255)), expected = [.393 * c[0]! + .769 * c[1]! + .189 * c[2]!, .349 * c[0]! + .686 * c[1]! + .168 * c[2]!, .272 * c[0]! + .534 * c[1]! + .131 * c[2]!].map(encode);
+        // Sepia is the CSS matrix on perceptual (sRGB-encoded) values, as photo apps apply it.
+        const c = [128, 64, 32].map(n => n / 255), expected = [.393 * c[0]! + .769 * c[1]! + .189 * c[2]!, .349 * c[0]! + .686 * c[1]! + .168 * c[2]!, .272 * c[0]! + .534 * c[1]! + .131 * c[2]!].map(n => encode(decode(Math.min(1, n))));
         expect([saved.width, saved.height]).toEqual([96, 64]);
         expected.forEach((v, k) => expect(Math.abs(saved.bytes[k]! - v)).toBeLessThanOrEqual(2));
         expect(saved.warp).toEqual([]);
@@ -58,7 +59,8 @@ test('warps are registered, presets append, and every category has live thumbnai
     await page.getByRole('radiogroup', { name: 'Distortion', exact: true }).getByRole('radio', { name: 'Twirl', exact: true }).click();
     expect((await save(page)).warp[0]?.filter).toBe('twirl');
     await page.getByRole('radiogroup', { name: 'Looks and presets', exact: true }).getByRole('radio', { name: 'Warm film', exact: true }).click();
-    expect((await save(page)).entries.length).toBe(5);
+    // Warm film is a colour grade, grain and a vignette, appended after the twirl.
+    expect((await save(page)).entries.map(e => e.filter)).toEqual(['twirl', 'colour-grade', 'film-grain', 'vignette']);
     await expect(page.locator('.gi-filter-thumb img')).toHaveCount(39);
     expect(await page.locator('.gi-filter-thumb img').evaluateAll(nodes => nodes.every(n => (n as HTMLImageElement).naturalWidth > 0))).toBe(true);
 });

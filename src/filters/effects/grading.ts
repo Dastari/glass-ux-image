@@ -1,5 +1,5 @@
 import { defineFilter, type DataTexture } from '../../core/filter.js';
-import { pointPass, clamp, strength, mix, type AmountParams, type Colour } from './shared.js';
+import { pointPass, perceptual, encode, decode, smoothstep, clamp, strength, mix, type AmountParams, type Colour } from './shared.js';
 /** Plain-data linear RGB LUT; red varies fastest, then green, then blue. Values and domains are linear. */
 export interface Lut3D {
     /** Cube edge from 2 to 64 samples. */
@@ -93,3 +93,54 @@ export function generateLut(size: number, transform: (c: Colour) => Colour): Lut
     validateLut(lut);
     return lut;
 }
+/** amount=0 is neutral. A colour grade in plain numbers; every field defaults to no change. */
+export interface ColourGradeParams extends AmountParams {
+    /** -1…1: white balance towards amber (positive) or blue. */
+    warmth?: number;
+    /** -1…1: towards magenta (positive) or green. */
+    tint?: number;
+    /** 0…1: mix to black and white, using `mix`. */
+    mono?: number;
+    /** Linear channel weights for black and white, normalised; default Rec. 709 luminance. */
+    mix?: Colour;
+    /** -1…1: an S-curve on each perceptual channel about mid grey (positive), or a flattening one. */
+    contrast?: number;
+    /** -1…1: saturation about perceptual luminance. */
+    saturation?: number;
+    /** Perceptual offsets added to the shadows (split toning), about ±0.1 for a visible tone. */
+    shadows?: Colour;
+    /** Perceptual offsets added to the highlights. */
+    highlights?: Colour;
+    /** 0…1: lift blacks and dim whites, as a matte tone curve does. */
+    fade?: number;
+}
+const grade3 = (c: readonly number[] | undefined): Colour => [c?.[0] ?? 0, c?.[1] ?? 0, c?.[2] ?? 0];
+/**
+ * A parametric colour grade, as Lightroom's white balance, tone curve, saturation, split toning and black and
+ * white mix combine: white balance and the mono mix act on linear light; contrast, saturation, toning and fade
+ * on perceptual values. One point pass; looks are built from it.
+ */
+export const colourGrade = /* @__PURE__ */ defineFilter<ColourGradeParams>({ id: 'colour-grade', padding: () => 0, passes(p, s, f) {
+        const a = strength(p.amount);
+        if (!a)
+            return [];
+        const warmth = clamp(p.warmth ?? 0, -1, 1), tint = clamp(p.tint ?? 0, -1, 1), mono = clamp(p.mono ?? 0), contrast = clamp(p.contrast ?? 0, -1, 1), saturation = clamp(p.saturation ?? 0, -1, 1), fade = clamp(p.fade ?? 0);
+        const weights = grade3(p.mix ?? [.2126, .7152, .0722]), total = weights[0] + weights[1] + weights[2], mixWeights = (total > 0 ? weights.map(w => w / total) : [.2126, .7152, .0722]) as Colour;
+        const gains: Colour = [(1 + .12 * warmth) * (1 + .05 * tint), 1 - .1 * tint, (1 - .12 * warmth) * (1 + .05 * tint)], shadows = grade3(p.shadows), highlights = grade3(p.highlights);
+        const lum = (e: Colour) => e[0] * .2126 + e[1] * .7152 + e[2] * .0722;
+        const sstep = (x: number) => x * x * (3 - 2 * x);
+        return [pointPass('colour-grade', f, s, a, `vec3 l=c*uGains;l=mix(l,vec3(dot(l,uMix)),uMono);vec3 e=encode(l);
+ vec3 x=clamp(e,0.0,1.0);e+=uContrast*(x*x*(3.0-2.0*x)-x);float y=luminance(e);e=y+(e-y)*(1.0+uSaturation);
+ y=clamp(luminance(e),0.0,1.0);e+=uShadows*(1.0-smoothstep(0.0,.6,y))+uHighlights*smoothstep(.4,1.0,y);
+ e=e*(1.0-.32*uFade)+.24*uFade;result=decode(e);`, c => {
+            let l = c.map((v, k) => v * gains[k]!) as Colour;
+            const m = l[0] * mixWeights[0] + l[1] * mixWeights[1] + l[2] * mixWeights[2];
+            l = l.map(v => v + (m - v) * mono) as Colour;
+            let e = l.map(v => { const x = clamp(encode(v)); return encode(v) + contrast * (sstep(x) - x); }) as Colour;
+            let y = lum(e);
+            e = e.map(v => y + (v - y) * (1 + saturation)) as Colour;
+            y = clamp(lum(e));
+            const ws = 1 - smoothstep(0, .6, y), wh = smoothstep(.4, 1, y);
+            return e.map((v, k) => decode((v + shadows[k]! * ws + highlights[k]! * wh) * (1 - .32 * fade) + .24 * fade)) as Colour;
+        }, { uGains: gains, uMix: mixWeights, uMono: mono, uContrast: contrast, uSaturation: saturation, uShadows: shadows, uHighlights: highlights, uFade: fade }, `${perceptual}\nuniform vec3 uGains;uniform vec3 uMix;uniform float uMono;uniform float uContrast;uniform float uSaturation;uniform vec3 uShadows;uniform vec3 uHighlights;uniform float uFade;`)];
+    } });

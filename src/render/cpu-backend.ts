@@ -5,7 +5,7 @@ import { composePreparedLocal, type TileComposition } from "./compose.js";
 import { CpuWorkerClient } from "./cpu-worker-client.js";
 import { CPU_WORKER_FILTERS } from "./cpu-worker-protocol.js";
 import { CpuSurfaces, CpuSurface } from "./cpu-surfaces.js";
-import type { BackendInfo, Draw, PresentOptions, Surface } from "./types.js";
+import type { BackendInfo, Draw, PresentGrid, PresentOptions, Surface } from "./types.js";
 
 const css = ([r, g, b]: readonly [number, number, number]) =>
   `rgb(${r * 255} ${g * 255} ${b * 255})`;
@@ -104,13 +104,22 @@ export class CpuBackend extends CpuSurfaces {
 
   override present(
     draws: readonly Draw[],
-    { background, pixelated }: PresentOptions,
+    { background, pixelated, grid }: PresentOptions,
   ) {
     const context = this.canvas.getContext("2d", { alpha: false });
     if (!context) return;
     context.imageSmoothingEnabled = !pixelated;
     context.fillStyle = css(background);
     context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    if (grid && grid.rect.width > 0 && grid.rect.height > 0) {
+      const pattern = this.#grid(context, grid);
+      if (pattern) {
+        // Squares count from the document's corner, as the WebGL grid does.
+        pattern.setTransform(new DOMMatrix().translateSelf(grid.rect.x, grid.rect.y));
+        context.fillStyle = pattern;
+        context.fillRect(grid.rect.x, grid.rect.y, grid.rect.width, grid.rect.height);
+      }
+    }
     for (const { surface, source: s, target: t } of draws) {
       context.drawImage(
         this.#picture(surface as CpuSurface),
@@ -124,6 +133,23 @@ export class CpuBackend extends CpuSurfaces {
         t.height,
       );
     }
+  }
+
+  #gridPattern?: { key: string; pattern: CanvasPattern | null };
+
+  /** Two squares by two, repeated; kept until the size or colours change. */
+  #grid(context: CanvasRenderingContext2D, { cell, colours }: PresentGrid) {
+    const key = `${cell}:${colours.flat().join(",")}`;
+    if (this.#gridPattern?.key === key) return this.#gridPattern.pattern;
+    const tile = new OffscreenCanvas(cell * 2, cell * 2), draw = tile.getContext("2d")!;
+    draw.fillStyle = css(colours[0]);
+    draw.fillRect(0, 0, cell * 2, cell * 2);
+    draw.fillStyle = css(colours[1]);
+    draw.fillRect(cell, 0, cell, cell);
+    draw.fillRect(0, cell, cell, cell);
+    const pattern = context.createPattern(tile, "repeat");
+    this.#gridPattern = { key, pattern };
+    return pattern;
   }
 
   #picture(surface: CpuSurface) {

@@ -108,3 +108,26 @@ it("restarts from the opened picture: one labelled step, earlier steps dropped, 
   expect(actions.filter(id=>id==="edit.restart")).toHaveLength(3);
   s.dispose();
 });
+it("commits a held draft before history moves, so Undo removes only that draft's step",async()=>{
+  const s=createEditorSession({source:solidSource({width:8,height:8},[1,0,0,1])});
+  await ready(s);
+  s.commit({geometry:{...normaliseGeometry(),angle:10}},{label:"Turn"});
+  // A tool previews a nudge and holds it for a burst, as Select's arrow keys do.
+  s.preview({geometry:{...s.state.draft.geometry,angle:12}});
+  let held=true;
+  const release=s.holdDraft(()=>{if(held){held=false;s.commit({},{label:"Nudge"});}});
+  s.undo();
+  expect(s.history.current.label).toBe("Turn");
+  expect(s.state.recipe.geometry.angle).toBe(10);
+  release();
+  s.dispose();
+});
+it("reset clears metadata edits as well",async()=>{
+  const s=createEditorSession({source:solidSource({width:8,height:8},[1,0,0,1])});
+  await ready(s);
+  s.commit({metadata:{set:{"exif:Artist":"Someone"}}} as never,{label:"Artist"});
+  expect(s.state.recipe.metadata).toBeDefined();
+  s.reset();
+  expect(s.state.recipe.metadata).toBeUndefined();
+  s.dispose();
+});

@@ -113,7 +113,8 @@ function RotateOverlay() {
     const flush = () => { if (keyed.current) { clearTimeout(keyed.current); keyed.current = null; commitAngle(session, base.rotate); } };
     const flushRef = useRef(flush);
     flushRef.current = flush;
-    useEffect(() => () => flushRef.current(), []);
+    // History commands record a pending key turn first, so Undo removes it rather than the step before.
+    useEffect(() => { const release = session.holdDraft(() => flushRef.current()); return () => { release(); flushRef.current(); }; }, [session]);
     if (!size || !sourceSize) return null;
     const mapping = geometryMapping(sourceSize, draft.geometry);
     const toScreen = (p: Point): Point | null => { const d = mapping.fromSource(p[0], p[1]); if (!d) return null; const r = map.toScreen({ x: d[0], y: d[1], width: 0, height: 0 }); return [r.x, r.y]; };

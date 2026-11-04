@@ -48,4 +48,5 @@ export const CPU_WORKER_FILTERS = new Set([
   "solarise",
   "emboss",
   "lut-grading",
+  "colour-grade",
 ]);

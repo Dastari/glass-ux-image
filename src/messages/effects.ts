@@ -49,6 +49,7 @@ export const effectsMessages = defineMessages("imageEditor.effects", {
   solarise: "Solarise",
   emboss: "Emboss",
   lut: "3D LUT",
+  colourGrade: "Colour grade",
   stack: "Applied effects",
   strength: "Strength",
   centreX: "Centre X",

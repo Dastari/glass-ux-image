@@ -13,11 +13,13 @@ import { effectsMessages, type EffectsMessages } from '../../messages/effects.js
 import { useEditor, useSessionState } from '../../react/session-context.js';
 import type { EditorSession } from '../../session/index.js';
 import { FilterGallery, type FilterGalleryItem } from '../../panels/filter-gallery.js';
-import { effectDefinitions, type EffectCategory, type EffectEntry } from '../../filters/effects/catalogue.js';
-import { cinematicLooks, effectPresets, type EffectPreset } from '../../filters/effects/presets.js';
+import { effectDefinitions, effectParams, REFERENCE_EDGE, type EffectCategory, type EffectEntry, type EffectPictureSize } from '../../filters/effects/catalogue.js';
+import { cinematicLooks, effectPresets, fitPreset, type EffectPreset } from '../../filters/effects/presets.js';
 import type { Lut3D } from '../../filters/effects/grading.js';
 import { readEffects, effectRecipeFilters, type EffectActionArgs } from './actions.js';
 import { createId } from '../../core/id.js';
+/** Effects with neutral defaults, offered through looks and imports rather than as gallery candidates. */
+const hidden = new Set(['lut-grading', 'colour-grade']);
 const labels: Record<string, keyof EffectsMessages> = { 'warm-film': 'warmFilm', 'silver-screen': 'silverScreen', 'soft-cinema': 'softCinema', pencil: 'pencil', 'ink-print': 'inkPrint', miniature: 'miniature' };
 const nameOf = (m: EffectsMessages, id: string) => { const definition = effectDefinitions.find(d => d.id === id); return m[(definition?.label ?? id) as keyof EffectsMessages] ?? id; };
 function freshId() { return createId(); }
@@ -68,10 +70,12 @@ export function FilterGalleryPanel({ session: provided, category, presets = fals
             setError(true);
     } };
     const source = useCallback(() => preview(session), [session, draft]);
-    const items = useMemo<FilterGalleryItem[]>(() => presets ? [...cinematicLooks, ...effectPresets].map(p => ({ id: p.id, label: m[labels[p.id]!] ?? p.id, effects: presetEntries(p) })) : effectDefinitions.filter(d => (!category || d.category === category) && d.id !== 'lut-grading').map(d => ({ id: d.id, label: nameOf(m, d.id), effects: [entry(d.id, d.params)] })), [presets, category, m]);
+    // Defaults and looks are fitted to the picture, so each thumbnail is a faithful miniature of the result.
+    const width = size?.width, height = size?.height, fitted = useMemo(() => width && height ? { width, height } : null, [width, height]);
+    const items = useMemo<FilterGalleryItem[]>(() => presets ? [...cinematicLooks, ...effectPresets].map(p => ({ id: p.id, label: m[labels[p.id]!] ?? p.id, effects: presetEntries(fitPreset(p, fitted)) })) : effectDefinitions.filter(d => (!category || d.category === category) && !hidden.has(d.id)).map(d => ({ id: d.id, label: nameOf(m, d.id), effects: [entry(d.id, effectParams(d.id, fitted))] })), [presets, category, m, fitted]);
     const choose = (id: string) => { const item = items.find(i => i.id === id)!; session.run(presets ? 'effects.preset' : 'effects.add', presets ? { entries: item.effects.map(e => ({ ...e, id: freshId() })), label: m.presetHistory } : { entry: { ...item.effects[0]!, id: freshId() }, label: m.addHistory }); };
     return <div className="gi-effects-category">
- <FilterGallery items={items} source={status === 'ready' ? source : null} documentWidth={size?.width} onValueChange={choose} disabled={status !== 'ready'} aria-label={presets ? m.looks : category ? m[category] : m.gallery}/>
+ <FilterGallery items={items} source={status === 'ready' ? source : null} documentWidth={size?.width} detailScale={0} onValueChange={choose} disabled={status !== 'ready'} aria-label={presets ? m.looks : category ? m[category] : m.gallery}/>
  {(category === 'grading' || !category) && !presets && <><FileDrop variant="compact" aria-label={m.importLut} accept=".cube" maxSize={16 * 1024 * 1024} maxFiles={1} onFiles={(files, rejected) => { if (rejected.length) {
             setError(true);
             return;
@@ -88,8 +92,7 @@ export interface EffectsStackPanelProps {
 }
 /** Duplicate effects can be reordered, blended, edited and removed with intercepted labelled actions. */
 export function EffectsStackPanel({ session: provided }: EffectsStackPanelProps) {
-    const session = useEditor(provided);
-    useSessionState(session);
+    const session = useEditor(provided), { size } = useSessionState(session);
     const m = useMessages(effectsMessages), entries = readEffects(session);
     const update = (id: string, patch: EffectActionArgs['patch'], commit: boolean) => { if (commit) {
         session.run('effects.update', { id, patch, label: m.updateHistory });
@@ -99,7 +102,7 @@ export function EffectsStackPanel({ session: provided }: EffectsStackPanelProps)
     return <div className="gi-effects-stack" role="group" aria-label={m.stack}>{entries.length === 0 && <EmptyState className="gi-effects-empty" icon={<IconFilter />}>{m.noEffects}</EmptyState>}{entries.map((e, index) => <Surface material="inset" radius="tile" className="gi-effects-entry" key={e.id} role="group" aria-label={nameOf(m, e.filter)}>
  <div className="gi-effects-head"><span className="gi-effects-name">{nameOf(m, e.filter)}</span><div className="gi-effects-row"><Button size="xs" variant="ghost" icon={<IconArrowUp />} aria-label={m.earlier} disabled={index === 0} onClick={() => reorder(index, -1)}/><Button size="xs" variant="ghost" icon={<IconArrowDown />} aria-label={m.later} disabled={index === entries.length - 1} onClick={() => reorder(index, 1)}/><Button size="xs" variant="ghost" icon={<IconTrash />} aria-label={m.remove} onClick={() => session.run('effects.remove', { id: e.id, label: m.remove })}/></div></div>
  <SliderField label={m.strength} min={0} max={100} step={1} size="sm" value={Math.round(e.strength * 100)} onValueChange={v => update(e.id, { strength: v / 100 }, false)} onValueCommitted={v => update(e.id, { strength: v / 100 }, true)}/>
- <ParameterControls effect={e} messages={m} onChange={(params, commit) => update(e.id, { params }, commit)}/>
+ <ParameterControls effect={e} messages={m} size={size} onChange={(params, commit) => update(e.id, { params }, commit)}/>
  </Surface>)}</div>;
 }
 interface Control {
@@ -110,20 +113,23 @@ interface Control {
     step: number;
     fallback: number;
 }
-function ParameterControls({ effect: e, messages: m, onChange }: {
+function ParameterControls({ effect: e, messages: m, size, onChange }: {
     effect: EffectEntry;
     messages: EffectsMessages;
+    size?: EffectPictureSize | null;
     onChange: (params: Record<string, unknown>, commit: boolean) => void;
 }) {
     const d = effectDefinitions.find(d => d.id === e.filter);
     if (!d)
         return null;
     const controls: Control[] = [];
+    // Length ranges grow with the picture, as its fitted defaults do.
+    const k = size ? Math.max(1, Math.max(size.width, size.height) / REFERENCE_EDGE) : 1, long = (n: number) => Math.round(n * k);
     const add = (key: string, label: keyof EffectsMessages, min: number, max: number, step: number, fallback: number) => controls.push({ key, label, min, max, step, fallback });
     if (e.filter === 'gaussian-blur')
-        add('sigma', 'radius', 0, 30, .25, 3);
+        add('sigma', 'radius', 0, long(30), .25, 3);
     else if (['blur', 'sharpness', 'artistic'].includes(d.category) || ['bloom', 'glow', 'lens-flare', 'reduce-noise', 'remove-grain', 'emboss'].includes(e.filter))
-        add('radius', 'radius', 0, e.filter === 'lens-flare' ? 300 : 30, .25, 2);
+        add('radius', 'radius', 0, d.lengths.includes('radius') ? long(e.filter === 'lens-flare' ? 300 : 40) : 30, .25, 2);
     if (e.filter === 'motion-blur')
         add('angle', 'angle', -180, 180, 1, 0);
     if (e.filter === 'tilt-shift') {
@@ -131,7 +137,7 @@ function ParameterControls({ effect: e, messages: m, onChange }: {
         add('band', 'band', .01, 1, .01, .2);
     }
     if (d.category === 'pixel' || ['film-grain', 'add-noise'].includes(e.filter))
-        add('size', 'size', 1, 64, 1, d.category === 'pixel' ? 12 : 1);
+        add('size', 'size', 1, d.lengths.includes('size') ? long(64) : 64, d.lengths.includes('size') ? .5 : 1, d.category === 'pixel' ? 12 : 1);
     if (['film-grain', 'add-noise'].includes(e.filter))
         add('seed', 'seed', 0, 65535, 1, 7);
     if (e.filter === 'posterise')
@@ -141,10 +147,14 @@ function ParameterControls({ effect: e, messages: m, onChange }: {
     if (e.filter === 'bloom')
         add('threshold', 'pivot', 0, 1, .01, .7);
     if (d.category === 'distortion') {
-        add('amount', 'displacement', -10, 10, .1, .7);
-        add('radius', 'radius', 1, 1000, 1, 150);
+        if (d.lengths.includes('amount'))
+            add('amount', 'displacement', -long(40), long(40), .1, 6);
+        else
+            add('amount', 'displacement', -10, 10, .1, .7);
+        if (e.filter !== 'wave')
+            add('radius', 'radius', 1, long(1000), 1, 400);
         if (['wave', 'ripple'].includes(e.filter))
-            add('wavelength', 'wavelength', 1, 300, 1, 40);
+            add('wavelength', 'wavelength', 1, long(300), 1, 40);
     }
     if (['reduce-noise', 'remove-grain'].includes(e.filter))
         add('tolerance', 'tolerance', .01, 1, .01, .15);

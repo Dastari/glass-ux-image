@@ -7,3 +7,42 @@
   .gi-files-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--space-2); }
   .gi-files [role="status"] { min-block-size: 1lh; }
 }
+
+/* Image information: Lightroom's metadata panel in Glass UX parts. Labels sit in a muted column that
+   lines up across a group, values read in body text, and row controls appear on hover or focus. */
+@layer components {
+  .gi-info { gap: var(--space-4); }
+  .gi-info-summary { display: grid; gap: var(--space-1); min-inline-size: 0; }
+  .gi-info-title { margin: 0; color: var(--fg); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+  .gi-info-subtitle { margin: 0; color: var(--fg-muted); font-size: var(--type-caption-size); line-height: var(--type-caption-line); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .gi-info-capture { list-style: none; margin: var(--space-1) 0 0; padding: var(--space-2) var(--space-3); display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); border-radius: var(--radius-control); background: var(--fill-muted); color: var(--fg); font-size: var(--type-label-size); line-height: var(--type-label-line); font-variant-numeric: tabular-nums; }
+  .gi-info-capture li { white-space: nowrap; }
+  .gi-info-error { margin: 0; color: var(--danger-text); font-size: var(--type-caption-size); line-height: var(--type-caption-line); }
+
+  /* Two aligned columns: the label column is sized by the panel, not by its longest label. */
+  .gi-info-facts.fa-fact-list { display: grid; grid-template-columns: minmax(5.5rem, 31%) minmax(0, 1fr); gap: 0 var(--space-3); }
+  .gi-info-facts.fa-fact-list > div { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: start; min-block-size: var(--control-h-sm); padding-block: var(--space-half); border-radius: var(--radius-item); }
+  .gi-info-facts.fa-fact-list > div:hover { background: var(--fill-hover); }
+  .gi-info-facts.fa-fact-list dt { max-inline-size: none; padding-block: calc((var(--control-h-sm) - var(--type-caption-line)) / 2); padding-inline-start: var(--space-1); text-align: end; }
+  .gi-info-facts.fa-fact-list dd { min-inline-size: 0; }
+
+  .gi-info-value { display: flex; align-items: flex-start; gap: var(--space-1); min-inline-size: 0; min-block-size: var(--control-h-sm); }
+  .gi-info-text { flex: 1; min-inline-size: 0; padding-block: calc((var(--control-h-sm) - var(--type-body-line)) / 2); color: var(--fg); font-size: var(--type-body-size); line-height: var(--type-body-line); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; white-space: pre-line; }
+  .gi-info-value[data-empty] .gi-info-text { color: var(--fg-subtle); }
+  .gi-info-value[data-editing] > * { flex: 1; min-inline-size: 0; }
+  .gi-info-list { align-items: center; }
+  .gi-info-list > :first-child { flex: 1; min-inline-size: 0; }
+  .gi-info-acts { display: flex; flex: none; gap: var(--space-half); }
+  /* Row controls stay in the tab order and appear with the pointer or focus; touch screens always show them. */
+  .gi-info-act { opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard); }
+  .gi-info-facts > div:hover .gi-info-act, .gi-info-facts > div:focus-within .gi-info-act, .gi-info-act:focus-visible { opacity: 1; }
+  @media (hover: none) { .gi-info-act { opacity: 1; } }
+
+  .gi-info-actions { display: flex; justify-content: flex-start; padding-block-start: var(--space-2); }
+  .gi-info-family + .gi-info-family { margin-block-start: var(--gap-section); }
+  .gi-info-overline { display: flex; justify-content: space-between; margin: 0 0 var(--space-1); padding-inline: var(--space-1); color: var(--fg-muted); font-size: var(--type-overline-size); line-height: var(--type-overline-line); font-weight: var(--type-overline-weight); letter-spacing: var(--type-overline-tracking); text-transform: uppercase; }
+  .gi-info-overline span { font-variant-numeric: tabular-nums; }
+  .gi-info-footer { display: grid; gap: var(--space-2); justify-items: start; }
+  .gi-info-footer .gi-panel-hint, .gi-info > .gi-panel-hint { display: grid; gap: var(--space-1); }
+  .gi-info-note { display: block; }
+}

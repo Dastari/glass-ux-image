@@ -13,10 +13,13 @@ test('workspace actions share menus, palette, overrides and scoped keys; branche
   await page.keyboard.press('c');
   await page.waitForFunction(()=>window.__workspaceDemo!.pictures[0]!.editor.state.tool==='crop');
   await page.evaluate(()=>{const s=window.__workspaceDemo!.pictures[0]!.editor;s.commit({geometry:{...s.state.recipe.geometry,rotation:90}},{label:'Turn'});s.undo();s.commit({geometry:{...s.state.recipe.geometry,rotation:180}},{label:'Other turn'});});
+  // History opens from its title-bar button.
+  await page.getByRole('button',{name:'History',exact:true}).click();
   await expect(page.getByRole('treeitem',{name:'Turn',exact:true})).toBeVisible();
   await expect(page.getByRole('treeitem',{name:'Other turn',exact:true})).toBeVisible();
   await page.getByRole('treeitem',{name:'Turn',exact:true}).click();
   await page.waitForFunction(()=>window.__workspaceDemo!.pictures[0]!.editor.history.current.label==='Turn');
+  await page.keyboard.press('Escape');
   await page.locator('.gi-stage').focus();await page.keyboard.press('Control+z');
   await page.waitForFunction(()=>window.__workspaceDemo!.pictures[0]!.editor.history.current.id==='0');
   await page.keyboard.press('Control+Shift+z');
@@ -75,7 +78,7 @@ for(const mode of ['dark','light'])for(const dir of ['ltr','rtl'])for(const widt
   const stage=page.locator('.gi-stage');await expect(stage).toHaveAttribute('dir','ltr');const box=(await stage.boundingBox())!;expect(box.height).toBeGreaterThan(200);expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(width);
   await page.evaluate(()=>window.__workspaceDemo!.pictures[0]!.editor.renderer!.settle());
   if(width===1440) {
-    const histogram=page.locator('.gi-workspace-right-content > .gi-develop-histogram');
+    const histogram=page.locator('.gi-workspace-right-head > .gi-develop-histogram');
     await expect(histogram).toHaveAttribute('data-weight',/^[1-9]/);
     await expect.poll(()=>histogram.locator('.fa-chart-bar').evaluateAll(bars=>bars.filter(bar=>bar.getBoundingClientRect().height>0).length)).toBeGreaterThan(0);
   }
@@ -106,7 +109,7 @@ for(const kit of ['basic','standard','advanced'])test(`PhotoEditor accepts ${kit
   // A readiness wait, not a speed check: SwiftShader's first paint takes about 4 s at a 4x slower CPU, the same
   // before and after 0.1.0's changes, which left a hosted runner too close to the default 5 s.
   await expect.poll(async()=>(await page.locator('.gi-stage-surface canvas').screenshot()).byteLength,{timeout:20_000}).toBeGreaterThan(15000);
-  const radios=page.locator('.gi-photo-side').getByRole('radiogroup',{name:'Tools',exact:true}).getByRole('radio');await expect(radios).toHaveCount(kit==='basic'?4:kit==='standard'?12:17);
+  const radios=page.locator('.gi-photo-side').getByRole('radiogroup',{name:'Tools',exact:true}).getByRole('radio');await expect(radios).toHaveCount(kit==='basic'?4:kit==='standard'?12:18); // advanced: Select leads it
   await radios.last().click();await expect(radios.last()).toBeChecked();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:`/tmp/gi-photo-kit-${kit}.png`});

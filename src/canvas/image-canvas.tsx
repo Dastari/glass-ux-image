@@ -8,7 +8,7 @@ import { MAX_ZOOM, MIN_ZOOM, type Rect } from "../core/index.js";
 import { imageEditorMessages } from "../react/messages.js";
 import { useEditorContext, useSessionState } from "../react/session-context.js";
 import type { CanvasMapping } from "../react/tool.js";
-import { CpuBackend, createRenderBackend, Renderer, type BackendOptions, type RenderBackend } from "../render/index.js";
+import { CpuBackend, createRenderBackend, Renderer, type BackendOptions, type RenderBackend, type TransparencyGrid } from "../render/index.js";
 
 const MARGIN = 24;
 const dpr = () => (typeof window === "undefined" ? 1 : window.devicePixelRatio || 1);
@@ -48,6 +48,12 @@ export interface ImageCanvasProps {
   className?: string;
   /** Drawn over the picture. Elements marked `data-canvas-tool` take pointer drags from panning. */
   children?: ReactNode;
+  /**
+   * The checkerboard under the picture's bounds that shows through transparent pixels, as image
+   * editors draw it. It moves, zooms and turns with the picture; the stage around it stays solid.
+   * Pass false to show transparent pixels over the stage, or a size and colours. Default true.
+   */
+  transparencyGrid?: TransparencyGrid | boolean;
 }
 
 /**
@@ -58,7 +64,7 @@ export interface ImageCanvasProps {
  * floating panes leave clear, read from `--pane-covered-*`. A host can set those four properties on
  * any ancestor to keep its own floating content clear. Panning and zooming use the whole stage.
  */
-export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", className, children, onDocumentPointer }: ImageCanvasProps) {
+export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", className, children, onDocumentPointer, transparencyGrid = true }: ImageCanvasProps) {
   const session = useEditorContext();
   const { status, cropping, draft } = useSessionState(session);
   const messages = useMessages(imageEditorMessages);
@@ -72,6 +78,11 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
   const [reading, setReading] = useState<"ltr" | "rtl">("ltr");
   const surface = useRef<HTMLDivElement>(null);
   const renderer = useRef<Renderer | null>(null);
+  // A host may pass a new object each render; only a different grid reaches the renderer.
+  const gridKey = JSON.stringify(transparencyGrid);
+  const grid = useRef(transparencyGrid);
+  grid.current = transparencyGrid;
+  useEffect(() => { renderer.current?.setTransparencyGrid(grid.current); }, [gridKey]);
   const [camera, setCamera] = useState<PanZoomCamera>({ x: 0, y: 0, k: 1 });
   /** Whether the picture should keep fitting the stage as the stage changes. */
   const fitted = useRef(true);
@@ -169,6 +180,7 @@ export function ImageCanvas({ "aria-label": label, backend: prefer = "auto", cla
     const next = new Renderer({
       document: session.document!,
       backend,
+      transparencyGrid: grid.current,
       fallback: (reason) => new CpuBackend({ fallbackReason: reason }),
       onBackendChange: show,
     });

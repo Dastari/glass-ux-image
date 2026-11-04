@@ -49,6 +49,21 @@ void main() {
   outColor = vec4(encode(clamp(straight, 0.0, 1.0)) * c.a, c.a);
 }`;
 
+/** The transparency grid: squares counted from the document's corner, in device pixels, top-left origin. */
+const GRID_FRAGMENT = /* glsl */ `#version 300 es
+precision highp float;
+uniform vec4 uTarget;
+uniform vec2 uCanvas;
+uniform float uCell;
+uniform vec3 uFirst;
+uniform vec3 uSecond;
+out vec4 outColor;
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uCanvas.y - gl_FragCoord.y) - uTarget.xy;
+  vec2 square = floor(p / uCell);
+  outColor = vec4(mix(uFirst, uSecond, mod(square.x + square.y, 2.0)), 1.0);
+}`;
+
 /** The formulas match `blendPixels` in the CPU backend. */
 const BLEND_FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
@@ -301,7 +316,7 @@ export class WebGL2Backend implements RenderBackend {
     this.canvas.height = height;
   }
 
-  present(draws: readonly Draw[], { background, pixelated }: PresentOptions) {
+  present(draws: readonly Draw[], { background, pixelated, grid }: PresentOptions) {
     if (this.#isLost) return;
     const gl = this.#gl;
     const { width, height } = this.canvas;
@@ -309,6 +324,17 @@ export class WebGL2Backend implements RenderBackend {
     gl.viewport(0, 0, width, height);
     gl.clearColor(background[0], background[1], background[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    if (grid && grid.rect.width > 0 && grid.rect.height > 0) {
+      gl.disable(gl.BLEND);
+      const checker = this.#program("grid", PRESENT_VERTEX, GRID_FRAGMENT);
+      gl.useProgram(checker.program);
+      gl.uniform2f(this.#uniform(checker, "uCanvas"), width, height);
+      gl.uniform4f(this.#uniform(checker, "uTarget"), grid.rect.x, grid.rect.y, grid.rect.width, grid.rect.height);
+      gl.uniform1f(this.#uniform(checker, "uCell"), grid.cell);
+      gl.uniform3f(this.#uniform(checker, "uFirst"), ...grid.colours[0]);
+      gl.uniform3f(this.#uniform(checker, "uSecond"), ...grid.colours[1]);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     const entry = this.#program("present", PRESENT_VERTEX, PRESENT_FRAGMENT);

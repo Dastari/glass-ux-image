@@ -21,26 +21,30 @@ export interface ExifFields {
   /** GPS coordinates in signed degrees and altitude in metres. */
   gps?:{latitude?:number;longitude?:number;altitude?:number};
 }
-interface Entry { tag: number; type: number; count: number; at: number; data: number; size: number; gps: boolean }
+/** Which directory an entry lives in. Later chained IFDs past the thumbnail read as `ifd1`. */
+export type ExifIfd = 'ifd0'|'ifd1'|'exif'|'gps'|'interop';
+/** One directory entry, with absolute offsets into the TIFF payload. */
+export interface Entry { tag: number; type: number; count: number; at: number; data: number; size: number; gps: boolean; ifd: ExifIfd }
 /** Classic TIFF only; offsets are relative to this TIFF header. Bounded graph traversal rejects cycles. */
-function walk(bytes: Uint8Array) {
-  bounded(bytes,MAX_METADATA_BYTES); const endian=ascii(bytes.subarray(0,2)); ensure(endian==='II'||endian==='MM'); const le=endian==='II';
+export function walk(bytes: Uint8Array, limit=MAX_METADATA_BYTES) {
+  bounded(bytes,limit); const endian=ascii(bytes.subarray(0,2)); ensure(endian==='II'||endian==='MM'); const le=endian==='II';
   ensure(u16(bytes,2,le)===42); const entries: Entry[]=[]; const visited=new Set<number>();
-  const queue=[{offset:u32(bytes,4,le),gps:false}]; const sizes=[0,1,1,2,4,8,1,1,2,4,8,4,8];
-  const directories: {offset:number; size:number; gps:boolean}[]=[];
+  const queue:{offset:number;gps:boolean;ifd:ExifIfd}[]=[{offset:u32(bytes,4,le),gps:false,ifd:'ifd0'}]; const sizes=[0,1,1,2,4,8,1,1,2,4,8,4,8];
+  const directories: {offset:number; size:number; gps:boolean; ifd:ExifIfd}[]=[];
   while(queue.length) {
-    const {offset,gps}=queue.shift()!; if(!offset) continue;
+    const {offset,gps,ifd}=queue.shift()!; if(!offset) continue;
     ensure(!visited.has(offset)&&visited.size<64,'Cyclic or excessive EXIF directories'); visited.add(offset);
     const count=u16(bytes,offset,le); ensure(count<=4096 && entries.length+count<=8192,'Too many EXIF entries');
-    range(bytes,offset,2+count*12+4); directories.push({offset,size:2+count*12+4,gps});
+    range(bytes,offset,2+count*12+4); directories.push({offset,size:2+count*12+4,gps,ifd});
     for(let i=0;i<count;i++) {
       const at=offset+2+i*12, tag=u16(bytes,at,le), type=u16(bytes,at+2,le), n=u32(bytes,at+4,le);
       const unit=sizes[type]; ensure(unit!==undefined&&unit>0,'Unsupported EXIF field type');
       const size=n*unit; const data=size<=4?at+8:u32(bytes,at+8,le); range(bytes,data,size);
-      entries.push({tag,type,count:n,at,data,size,gps});
-      if(tag===0x8769||tag===0x8825||tag===0xa005) { ensure(type===4&&n===1); queue.push({offset:u32(bytes,data,le),gps:gps||tag===0x8825}); }
+      entries.push({tag,type,count:n,at,data,size,gps,ifd});
+      if(tag===0x8769||tag===0x8825||tag===0xa005) { ensure(type===4&&n===1); queue.push({offset:u32(bytes,data,le),gps:gps||tag===0x8825,ifd:tag===0x8769?'exif':tag===0x8825?'gps':'interop'}); }
     }
-    queue.push({offset:u32(bytes,offset+2+count*12,le),gps});
+    // Only the main chain continues to a thumbnail; sub-IFDs have no meaningful successor.
+    queue.push({offset:u32(bytes,offset+2+count*12,le),gps,ifd:ifd==='ifd0'||ifd==='ifd1'?'ifd1':ifd});
   }
   return {entries,directories,le};
 }

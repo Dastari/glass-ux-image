@@ -65,8 +65,10 @@ export function SessionTextPanel({ session }: SessionTextProps) {
 /** Click an existing glyph layer to edit it, or the stage to place a new one. */
 export function SessionTextOverlay({ session }: SessionTextProps) {
   const editor = useEditor(session), state = useSessionState(editor), layers = useLayers(editor), mapping = useCanvasMapping(), m = useMessages(layersMessages);
-  const [editing, setEditing] = useState<string | null>(null), [error, setError] = useState(false);
+  // The Select tool asks for an edit by naming the layer in tool data when a double-click brings it here.
+  const [editing, setEditing] = useState<string | null>(() => (editor.state.toolData["text.edit"] as string | undefined) ?? null), [error, setError] = useState(false);
   useEffect(() => { editor.setToolData("text.historyLabel", m.editText); }, [editor, m.editText]);
+  useEffect(() => { if (editor.state.toolData["text.edit"] !== undefined) editor.setToolData("text.edit", undefined); }, [editor]);
   if (!state.sourceSize || !state.size) return null;
   const geometry = geometryMapping(state.sourceSize, state.draft.geometry);
   const layer = layers.layers.find(layer => layer.id === editing && layer.kind === "text");

@@ -27,10 +27,9 @@ export interface FilterGalleryProps {
     /** Source pixels per document pixel, when `documentWidth` is not given. Default 1. */
     scale?: number;
     /**
-     * The least thumbnail pixels per document pixel that effects render at. A thumbnail shows the
-     * whole picture, so a faithful miniature would shrink a 2 px pencil line or a grain to nothing;
-     * this keeps each effect's character visible. Default 0.5, about how the picture reads at Fit.
-     * Pass 0 for a faithful miniature.
+     * The least thumbnail pixels per document pixel that effects render at. Default 0: a faithful
+     * miniature, which suits effects whose sizes scale with the picture (see `fitEffectParams`). Raise it
+     * for effects set in fixed pixels, so a 2 px line or grain still shows on a whole-picture thumbnail.
      */
     detailScale?: number;
     /** Original document width, when the async reader chooses its own pyramid level. */
@@ -49,7 +48,7 @@ export interface FilterGalleryProps {
     className?: string;
 }
 /** Worker-rendered thumbnails; the source reader is debounced and cancelled on replacement. */
-export function FilterGallery({ items, source, scale = 1, detailScale = 1, documentWidth, value, defaultValue = null, onValueChange, disabled = false, className, 'aria-label': name }: FilterGalleryProps) {
+export function FilterGallery({ items, source, scale = 1, detailScale = 0, documentWidth, value, defaultValue = null, onValueChange, disabled = false, className, 'aria-label': name }: FilterGalleryProps) {
     const messages = useMessages(effectsMessages), [selected, setSelected] = useState(defaultValue), [pictures, setPictures] = useState<Record<string, string>>({}), [failed, setFailed] = useState(false), generation = useRef(0), retainedUrls = useRef<string[]>([]);
     useEffect(() => () => { for (const url of retainedUrls.current) URL.revokeObjectURL(url); }, []);
     useEffect(() => {
@@ -94,6 +93,7 @@ export function FilterGallery({ items, source, scale = 1, detailScale = 1, docum
  <RadioGroup className="gi-filter-gallery" variant="cards" aria-label={name ?? messages.gallery} disabled={disabled} value={(value === undefined ? selected : value) ?? ''} onValueChange={id => { if (!id) return; if (value === undefined) setSelected(id); onValueChange?.(id); }}>
  {items.map(item => <RadioCard key={item.id} className="gi-filter-choice" value={item.id} onClick={() => { if ((value === undefined ? selected : value) === item.id) onValueChange?.(item.id); }} title={item.label} icon={<span className="gi-filter-thumb">{pictures[item.id] ? <img src={pictures[item.id]} alt="" decoding="async" width={THUMB_WIDTH / 2} height={THUMB_HEIGHT / 2}/> : <Skeleton.Block width="100%" height="100%"/>}</span>}/>)}
  </RadioGroup>
- <div className="gi-feedback" role="status"><Notice role="none" tone="danger" style={{visibility: failed ? undefined : 'hidden'}}>{messages.previewFailed}</Notice></div>
+ {/* The live region is always there, so a failure is announced; it takes no room until one happens. A gallery is the end of its section, so nothing below it moves. */}
+ <div className="gi-filter-gallery-status" role="status">{failed && <Notice role="none" tone="danger">{messages.previewFailed}</Notice>}</div>
  </div>;
 }

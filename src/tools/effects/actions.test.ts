@@ -1,3 +1,4 @@
+import { decode } from '../../filters/effects/shared.js';
 import { expect, it } from 'vitest';
 import { createEditorSession } from '../../session/session.js';
 import { solidSource } from '../../core/tile-source.js';
@@ -64,7 +65,7 @@ it('stack isolates saved inputs between duplicate multipass filters', () => {
             saved[pass.save] = target;
         current = target;
     }
-    expect(current.data[0]).toBeCloseTo(.25);
+    expect(current.data[0]).toBeCloseTo(decode(.5) * .5);
     expect(current.data[3]).toBe(.5);
 });
 

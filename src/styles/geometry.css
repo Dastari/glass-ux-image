@@ -74,3 +74,37 @@
  .gi-fill-edges { display:grid; gap:var(--space-2); justify-items:start; min-inline-size:0; }
  .gi-fill-edges > :not(.gi-panel-hint, button) { justify-self:stretch; }
 }
+
+@layer components {
+ /* Select: Photoshop's Move tool with Auto-Select. Its marks follow the rotate tool's: a bright form of
+    the accent over a soft dark shade, so they read on light and dark pictures alike. Picture space
+    never mirrors. */
+ /* logical:allow image-space overlays never mirror */
+ .gi-select { position:absolute; inset:0; pointer-events:none; --gi-select-mark:oklch(.86 max(var(--accent-c), .12) var(--accent-h)); } /* tokens:allow picture-space mark colour */
+ .gi-select-surface polygon, .gi-select-surface path, .gi-select-surface rect { fill:none; }
+ /* Every visible layer is a target; the one under the pointer shows a hairline, as Photoshop's hover does. */
+ .gi-select-surface .gi-select-hit { fill:transparent; stroke:transparent; stroke-width:1; pointer-events:all; }
+ .gi-select-hit:hover { stroke:var(--gi-select-mark); stroke-width:1.5; filter:drop-shadow(0 0 1px rgb(0 0 0 / .7)); } /* tokens:allow contrast shade under picture-space marks */
+ .gi-select-hit[data-selected] { cursor:move; }
+ .gi-select-hit[data-selected]:hover { stroke:transparent; }
+ .gi-select-surface .gi-select-catch { fill:transparent; pointer-events:all; cursor:move; }
+ .gi-select-box { outline:none; }
+ .gi-select-shade { stroke:black; stroke-opacity:.35; stroke-width:3; stroke-linejoin:round; } /* tokens:allow contrast shade under picture-space marks */
+ .gi-select-outline { stroke:var(--gi-select-mark); stroke-width:1.5; stroke-linejoin:round; }
+ .gi-select-cross { stroke:var(--gi-select-mark); stroke-width:1.5; stroke-linecap:round; }
+ .gi-select-ghost { stroke:white; stroke-opacity:.5; stroke-width:1; stroke-dasharray:4 4; pointer-events:none; } /* tokens:allow picture-space marks */
+ .gi-select-focus { stroke:transparent; stroke-width:2; pointer-events:none; }
+ .gi-select-box:focus-visible .gi-select-focus { stroke:Highlight; }
+ /* Square handles turn with the layer: white faces on a dark rim, ringed in the mark colour. */
+ .gi-select-surface .gi-select-handle-target { fill:transparent; pointer-events:all; }
+ .gi-select-surface .gi-select-handle-shade { fill:black; fill-opacity:.35; } /* tokens:allow contrast shade under picture-space marks */
+ .gi-select-surface .gi-select-handle-face { fill:white; stroke:var(--gi-select-mark); stroke-width:1.5; } /* tokens:allow picture-space marks */
+ .gi-select-handle:hover .gi-select-handle-face { fill:var(--gi-select-mark); stroke:white; } /* tokens:allow picture-space marks */
+ /* Hidden edge handles stay in the page, so a drag keeps its handle, but take no pointer. */
+ .gi-select-handle[data-hidden] { visibility:hidden; }
+ .gi-select-surface .gi-select-handle[data-hidden] .gi-select-handle-target { pointer-events:none; }
+ /* Just outside each corner a drag turns the layer. */
+ .gi-select-surface .gi-select-rotate { fill:transparent; pointer-events:all; cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 15.5A9.5 9.5 0 0 1 15.5 6M3 13l3 3.5 3-3.5M13 3l3.5 3-3.5 3' stroke='black' stroke-opacity='.6' stroke-width='4.5'/%3E%3Cpath d='M6 15.5A9.5 9.5 0 0 1 15.5 6M3 13l3 3.5 3-3.5M13 3l3.5 3-3.5 3' stroke='white' stroke-width='1.8'/%3E%3C/g%3E%3C/svg%3E") 11 11, grab; }
+ .gi-select[data-dragging] .gi-select-hit:hover { stroke:transparent; }
+ .gi-select-chip { position:absolute; padding:var(--space-1) var(--space-2); border-radius:var(--radius-control); background:var(--glass-fill-float); backdrop-filter:blur(12px) saturate(1.4); box-shadow:inset 0 0 0 var(--border-width) oklch(100% 0 0 / .14), var(--shadow-2); color:white; font-size:var(--type-caption-size); font-weight:var(--weight-semibold); font-variant-numeric:tabular-nums; white-space:pre; pointer-events:none; } /* tokens:allow on-media text and rim */
+}

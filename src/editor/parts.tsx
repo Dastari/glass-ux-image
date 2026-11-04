@@ -41,21 +41,30 @@ export interface ToolRailProps {
   onToolSelect?:(id:string)=>void;
   /** Show a Reset button at the end that removes the chosen tool's edits as one undo step. Default true. */
   reset?:boolean;
+  /**
+   * What happens when the tools do not fit one row. `fold` (default) folds them into the toolbar's
+   * More menu; `wrap` keeps every tool in sight on further rows, with Reset at the end of the first.
+   * A Glass UX toolbar folds a group as a whole, so in a fixed-width column `wrap` never hides them all.
+   */
+  layout?:'fold'|'wrap';
 }
 /**
  * One single-choice toolbar; large kits group by public tool family. A tool marked `standalone`
- * keeps its own button after its family's flyout.
+ * keeps its own button after its family's flyout, except a standalone first tool, which leads the
+ * rail on its own as Photoshop's Move tool does.
  */
-export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true}:ToolRailProps) {
+export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true,layout='fold'}:ToolRailProps) {
   const session=useEditor(editor),state=useSessionState(session),m=useMessages(workspaceMessages),base=useMessages(imageEditorMessages);
-  const groups=[...new Set(tools.map(t=>t.group??'geometry'))];
+  const lead=tools[0]?.standalone?tools[0]:undefined,rest=lead?tools.slice(1):tools;
+  const groups=[...new Set(rest.map(t=>t.group??'geometry'))];
   const disabled=state.status!=='ready';
   const labelOf=(t:ImageTool)=>toolLabels[t.id]??t.label(t.messages?.defaults??base);
   const button=(t:ImageTool)=><Toolbar.Button key={t.id} value={t.id} label={labelOf(t)} icon={t.icon} disabled={disabled}/>;
   const active=tools.find(t=>t.id===state.tool),change=active?toolResetChange(session,active):null;
-  return <div className="gi-tool-rail"><Toolbar aria-label={base.tools} overflow><Toolbar.Group aria-label={base.tools} value={state.tool??''} onValueChange={id=>onToolSelect?onToolSelect(id):session.run('tool.select',id)}>
+  return <div className="gi-tool-rail" data-layout={layout}><Toolbar aria-label={base.tools} overflow={layout==='fold'}><Toolbar.Group aria-label={base.tools} value={state.tool??''} onValueChange={id=>onToolSelect?onToolSelect(id):session.run('tool.select',id)}>
+    {lead&&button(lead)}
     {groups.flatMap(group=>{
-      const family=tools.filter(t=>(t.group??'geometry')===group),folded=family.filter(t=>!t.standalone);
+      const family=rest.filter(t=>(t.group??'geometry')===group),folded=family.filter(t=>!t.standalone);
       const members=folded.map(t=>({value:t.id,label:labelOf(t),icon:t.icon,disabled}));
       // A family of one is a plain tool button: the flyout's corner mark would promise tools that are not there.
       const head=folded.length===0?[]:folded.length===1?[button(folded[0]!)]:[<Toolbar.Flyout key={group} label={m[group]} tools={members}/>];

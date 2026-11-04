@@ -18,3 +18,4 @@ export { RetouchOverlay, type LiquifyInteraction, type RetouchOverlayProps } fro
 export { createRetouchTool } from './factory.js';
 export { readRetouchSettings, setRetouchSettings, type RetouchSettings, type RetouchKind } from './settings.js';
 export { applyPatch } from './patch-action.js';
+export { brushKeyActions, nextBrushSize, nextBrushHardness, BRUSH_SIZE_RANGE } from './brush-keys.js';

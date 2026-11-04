@@ -1,8 +1,9 @@
 import type { ImageTool } from "glass-ux-image/react";
 import { layers } from "glass-ux-image/tools/layers";
+import { select } from "glass-ux-image/tools/select";
 import { text } from "glass-ux-image/tools/text";
 /** Tools supplied independently by the layers domain. */
-export const layersTools: readonly ImageTool[] = [layers, text];
+export const layersTools: readonly ImageTool[] = [select, layers, text];
 
 // An opt-in public-API exercise for browser conformance, absent from ordinary demo interaction.
 if (new URLSearchParams(location.search).has("layers-test")) {

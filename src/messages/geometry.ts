@@ -75,7 +75,28 @@ export const geometryMessages = defineMessages("imageEditor.geometry", {
   "fillingEdges": "Filling edges",
   "edgesFilled": "Edges filled",
   "noEmptyEdges": "There are no empty edges to fill.",
-  "fillFailed": "The edges could not be filled."
+  "fillFailed": "The edges could not be filled.",
+  "select": "Select",
+  "selectHint": "Click text or an image layer to select it. Drag to move it, drag a handle to resize it, or drag just outside a corner to turn it.",
+  "noLayers": "Add text or an image layer to select and move it.",
+  "autoSelect": "Auto-select",
+  "noSelection": "No layer selected",
+  "selectedLayer": (layer: string) => `Selected layer: ${layer}`,
+  "selectKeys": "Arrow keys move it one pixel, or ten with Shift. Delete removes it; Escape deselects it.",
+  "editTextHint": "Double-click text to edit it.",
+  "duplicateLayer": "Duplicate layer",
+  "deleteLayer": "Delete layer",
+  "mergeDown": "Merge down",
+  "mergeVisible": "Merge visible",
+  "deselect": "Deselect",
+  "selectAbove": "Select layer above",
+  "selectBelow": "Select layer below",
+  "nudge": "Nudge",
+  "brushes": "Brushes",
+  "brushSmaller": "Decrease brush size",
+  "brushLarger": "Increase brush size",
+  "brushSofter": "Decrease brush hardness",
+  "brushHarder": "Increase brush hardness"
 });
 export type GeometryMessages = MessageValues<typeof geometryMessages.defaults>;
 

@@ -15,13 +15,18 @@ export interface EditRecipe {
   filters: Readonly<Record<string, unknown>>;
   layers?: readonly LayerSpec[];
   strokes?: readonly Stroke[];
+  /** EXIF, XMP and IPTC changes, written on export when the metadata policy keeps metadata. */
+  metadata?: import("../io/metadata/edits.js").MetadataEdits;
 }
 export type NormalisedRecipe = EditRecipe & { geometry: Required<Geometry>; layers: readonly LayerSpec[]; strokes: readonly Stroke[] };
 const NO_LAYERS: readonly LayerSpec[] = [];
 const NO_STROKES: readonly Stroke[] = [];
 /** Upgrade a Stage 2 recipe without traversing stroke or layer payloads. */
 export function normaliseRecipe(recipe: Partial<EditRecipe> = {}): NormalisedRecipe {
-  return { ...recipe, geometry: normaliseGeometry(recipe.geometry), filters: recipe.filters ?? {}, layers: recipe.layers ?? NO_LAYERS, strokes: recipe.strokes ?? NO_STROKES };
+  const { metadata, ...rest } = recipe;
+  // Edits that change nothing leave no key, so undoing back to the source compares equal to it.
+  const edited = metadata && (metadata.removeAll || metadata.removeGps || Object.keys(metadata.set ?? {}).length || metadata.remove?.length);
+  return { ...rest, ...(edited ? { metadata } : {}), geometry: normaliseGeometry(recipe.geometry), filters: recipe.filters ?? {}, layers: recipe.layers ?? NO_LAYERS, strokes: recipe.strokes ?? NO_STROKES };
 }
 /** Normalised geometry and empty filters, layers and strokes for a fresh session. */
 export const EMPTY_RECIPE: NormalisedRecipe = normaliseRecipe();

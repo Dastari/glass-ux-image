@@ -19,7 +19,7 @@ import {
   type Viewport,
 } from "../core/index.js";
 import { composeTile, prepareTile } from "./compose.js";
-import type { Draw, RenderBackend, Surface } from "./types.js";
+import type { Draw, PresentGrid, RenderBackend, Surface, TransparencyGrid } from "./types.js";
 
 interface Composed {
   surface: Surface;
@@ -35,6 +35,8 @@ export interface RendererOptions {
   backend: RenderBackend;
   /** Straight sRGB behind the document, 0–1. Defaults to the neutral stage grey. */
   background?: readonly [number, number, number];
+  /** A checkerboard under the document's bounds, which shows through transparent pixels. Off by default. */
+  transparencyGrid?: TransparencyGrid | boolean;
   /** Time a frame may spend composing tiles. The rest wait for later frames. */
   frameBudgetMs?: number;
   /** Bytes of composed tiles to keep. */
@@ -64,6 +66,9 @@ export interface RendererStats {
 }
 
 const DEFAULT_BACKGROUND = [0.149, 0.149, 0.149] as const;
+/** A light and a mid grey: transparency reads at once against the dark stage, and neither tints a picture's edge. */
+const DEFAULT_GRID_COLOURS = [[0.8, 0.8, 0.8], [0.62, 0.62, 0.62]] as const;
+const DEFAULT_GRID_SIZE = 8;
 const now = () => performance.now();
 
 /** Turns a document and a viewport into pixels, a few tiles each frame, without ever blocking. */
@@ -129,6 +134,26 @@ export class Renderer {
       if (!current(tile)) count++;
     }
     return count;
+  }
+
+  /** Show or hide the transparency grid, or change its squares, from the next frame. */
+  setTransparencyGrid(grid: TransparencyGrid | boolean) {
+    this.#options = { ...this.#options, transparencyGrid: grid };
+    this.#presented = undefined;
+    this.invalidate();
+  }
+
+  /** The grid for this frame, on the same rounding as the draws so its edge meets the picture's. */
+  #grid(): PresentGrid | undefined {
+    const option = this.#options.transparencyGrid;
+    if (!option) return undefined;
+    const { size = DEFAULT_GRID_SIZE, colours = DEFAULT_GRID_COLOURS } = option === true ? {} : option;
+    const view = this.#view, document = this.#document;
+    const toScreenX = (x: number) => Math.round((x - view.centerX) * view.zoom + view.width / 2);
+    const toScreenY = (y: number) => Math.round((y - view.centerY) * view.zoom + view.height / 2);
+    const x = toScreenX(0), y = toScreenY(0);
+    const ratio = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    return { rect: { x, y, width: toScreenX(document.width) - x, height: toScreenY(document.height) - y }, cell: Math.max(1, Math.round(size * ratio)), colours };
   }
 
   /** Show this viewport from the next frame. Resizes the canvas if its size changed. */
@@ -223,6 +248,7 @@ export class Renderer {
       this.backend.present(draws, {
         background: this.#options.background ?? DEFAULT_BACKGROUND,
         pixelated: this.#view.zoom >= 2,
+        grid: this.#grid(),
       });
     }
     this.#trim();
