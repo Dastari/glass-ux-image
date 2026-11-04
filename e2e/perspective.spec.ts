@@ -1,4 +1,5 @@
 import type { OpenPicture, ImageWorkspace } from '../src/editor/index.js';
+import { expectTiming } from "./fixtures/speed.js";
 declare global { interface Window { __workspaceDemo?: { pictures: OpenPicture[]; selected: string | null; workspace: ImageWorkspace | undefined } } }
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
@@ -114,7 +115,7 @@ test('Fill edges synthesises the uncovered corners as one undo step without stal
   expect(after.size).toEqual(before.size);
   console.log(`Fill edges on ${before.size!.width} × ${before.size!.height}: ${took} ms; longest main-thread task ${Math.round(Math.max(0, ...tasks))} ms; longest frame gap ${Math.round(Math.max(...gaps))} ms over ${gaps.length} frames`);
   // Inpainting and encoding run in a worker; the page's own thread only reads tiles in slices.
-  expect(Math.max(0, ...tasks)).toBeLessThan(250);
+  expectTiming("Fill edges, longest main-thread task", Math.max(0, ...tasks), 250);
   // The corners are now opaque picture, not transparency.
   const corners = await page.evaluate(async () => {
     const e = window.__workspaceDemo!.pictures[0]!.editor, pixels = await e.readPreview(256);

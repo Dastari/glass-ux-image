@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { expectTiming } from "./fixtures/speed.js";
 import { expect, test, type Page } from '@playwright/test';
 import type { EditorSession } from '../src/session/index.js';
 
@@ -183,6 +184,6 @@ test('a large dab is split across frames and does not hold the page', async ({ p
   console.log(`SwiftShader/CPU 700 px healing dab: ${result.elapsed.toFixed(0)} ms to settle over ${result.frames.length} frames; frame p95 ${p95.toFixed(1)} ms, max ${longest.toFixed(1)} ms; longest task ${result.longestTask.toFixed(1)} ms`);
   // Work that held the page would show as one frame as long as the whole dab.
   expect(result.frames.length).toBeGreaterThan(3);
-  expect(longest).toBeLessThan(250);
-  expect(p95).toBeLessThan(120);
+  expectTiming("Large dab, longest frame", longest, 250);
+  expectTiming("Large dab, frame p95", p95, 120);
 });

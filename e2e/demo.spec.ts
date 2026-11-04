@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { expectTiming } from "./fixtures/speed.js";
 import type { Renderer } from "glass-ux-image/render";
 
 declare global {
@@ -59,8 +60,8 @@ for (const backend of ["WebGL2", "CPU"] as const) {
     console.log(`${backend} zoom`, zoom);
     console.log(`${backend} stats`, await page.evaluate(() => window.__renderer!.stats));
     // Software GL on a server, so these catch stalls rather than prove 60 frames a second.
-    expect(pan.p95).toBeLessThan(120);
-    expect(zoom.p95).toBeLessThan(120);
+    expectTiming(`${backend} pan, frame p95`, pan.p95, 120);
+    expectTiming(`${backend} zoom, frame p95`, zoom.p95, 120);
   });
 }
 

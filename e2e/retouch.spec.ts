@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { expectTiming } from "./fixtures/speed.js";
 import { expect, test, type Page } from '@playwright/test';
 import { build } from '../apps/demo/node_modules/vite/dist/node/index.js';
 import { resolve } from 'node:path';
@@ -97,7 +98,7 @@ for (const backend of ['cpu', 'auto']) {
     expect(stable).toEqual({ revision: after.revision, pending: 0 });
     const times = after.frames.slice(1).sort((a, b) => a - b), p95 = times[Math.floor(times.length * .95)] ?? 0;
     console.log(`${backend} SwiftShader/CPU stroke: p95 ${p95.toFixed(1)} ms, max ${Math.max(...times).toFixed(1)} ms; preview tile reads ${during.tileReads - before.tileReads}/${before.composedTiles}, compose ${after.stats.composeMs.toFixed(1)} ms; longest main-thread task ${after.longestTask.toFixed(1)} ms (0 means none >=50 ms)`);
-    expect(p95).toBeLessThan(200); expect(Math.max(...times)).toBeLessThan(500);
+    expectTiming(`${backend} stroke, frame p95`, p95, 200); expectTiming(`${backend} stroke, longest frame`, Math.max(...times), 500);
   });
 }
 

@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { slowdown } from "./fixtures/speed.js";
+import { expectTiming } from "./fixtures/speed.js";
 import { expect, test, type Page } from '@playwright/test';
 import type { EffectEntry } from '../src/filters/effects/catalogue.js';
 const stack = (page: Page) => page.getByRole('group', { name: 'Applied effects', exact: true });
@@ -72,11 +72,8 @@ test('gallery workers generate previews without long main-thread tasks', async (
     }
     else
         setTimeout(poll, 20); }; poll(); }); return { worst, count: document.querySelectorAll('.gi-filter-thumb img').length }; });
-    // 50 ms on the reference machine, scaled by how much slower this one runs a fixed workload.
-    const factor = await slowdown(page);
-    console.log(`Effects gallery: longest frame ${result.worst.toFixed(1)} ms; machine ${factor.toFixed(2)}x the reference, limit ${(50 * factor).toFixed(0)} ms`);
     expect(result.count).toBeGreaterThanOrEqual(30);
-    expect(result.worst).toBeLessThan(50 * factor);
+    expectTiming("Effects gallery, longest frame", result.worst, 50);
 });
 test('effects controls have no axe violations', async ({ page }) => { await open(page); await page.getByRole('radiogroup', { name: 'Vintage', exact: true }).getByRole('radio', { name: 'Sepia', exact: true }).click(); const { violations } = await new AxeBuilder({ page }).include('.gi-photo-editor').exclude('.gi-stage').analyze(); expect(violations.map(v => `${v.id}: ${v.nodes[0]?.html}`)).toEqual([]); });
 test('standalone gallery takes a source and plain lists without an editor provider', async ({ page }) => {

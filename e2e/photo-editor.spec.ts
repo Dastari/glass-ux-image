@@ -1,4 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
+import { expectTiming } from "./fixtures/speed.js";
 import { expect, test, type Page } from "@playwright/test";
 import { crc32, deflateSync } from "node:zlib";
 
@@ -293,8 +294,8 @@ test("opens a large photo without freezing the page", async ({ page }) => {
     return { worst: Math.max(...gaps), opened: performance.now() - started };
   });
   console.log(`6000 × 4000 PNG: opened in ${Math.round(worst.opened)} ms, longest frame ${Math.round(worst.worst)} ms`);
-  expect(worst.opened).toBeLessThan(25000);
-  expect(worst.worst).toBeLessThan(400);
+  expectTiming("6000 × 4000 PNG, time to open", worst.opened, 25000);
+  expectTiming("6000 × 4000 PNG, longest frame", worst.worst, 400);
 });
 
 test("mirrors its chrome for right-to-left, and leaves the picture alone", async ({ page }) => {
