@@ -1,11 +1,11 @@
 # glass-ux-image 0.1.0
 
 The first release: image editing components and a tiled image engine for
-[Glass UX](https://github.com/Dastari/glass-ux) 0.15, from a single slider to a full photo editor. Pictures are
+[Glass UX](https://github.com/Dastari/glass-ux) 0.16, from a single slider to a full photo editor. Pictures are
 edited in the browser, on the GPU where there is one, and nothing is saved or uploaded unless the host decides to.
 
 ```sh
-pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.15.0/glass-ux-0.15.0.tgz
+pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.16.0/glass-ux-0.16.0.tgz
 pnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.1.0/glass-ux-image-0.1.0.tgz
 ```
 

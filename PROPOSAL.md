@@ -3,7 +3,7 @@
 `glass-ux-image` is a component library that plugs into Glass UX. It is not an application. The
 full editor is one composition of its parts, and the demo site is one consumer of that composition.
 
-Status: released as 0.1.0 on 2026-11-04, on glass-ux 0.15.0. Stages 1 to 3 are built, in `src/` and
+Status: released as 0.1.0 on 2026-11-04, on glass-ux 0.16.0. Stages 1 to 3 are built, in `src/` and
 `apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every tool, the kits and templates, and the hooks and
 parts under them. The owner reordered the later stages on 2026-11-02: `docs/stage-3-brief.md` records that
 work and its engine contract, and `docs/gaps-brief.md` the work that closed the remaining gaps before 0.1.0. Mock-ups live in `mockups/` and
@@ -227,6 +227,8 @@ Stage 2 needed no stopgaps. Every later stage now has what it needs: `glass-ux/m
 `gradient-picker`, the `Histogram` bins and the `ActivityFeed` timeline.
 
 Five gaps went to the Glass UX agent on 2026-11-03 and shipped in glass-ux 0.15.0, with two docs-kit items.
+0.1.0 is built on glass-ux 0.16.0, whose colour wheel reaches each hue's most saturated sRGB colour at its rim;
+`BalanceWheel` stores channel offsets computed from hue and amount, so stored edits are unchanged.
 The stand-ins are gone:
 
 - **Formatters:** `numberFormat` and `formatPercent` from `glass-ux/locale` replace `src/react/format.ts`.
@@ -374,7 +376,7 @@ Everything left open here was closed before 0.1.0; see the next section.
 Built on 2026-11-03 and 2026-11-04 against glass-ux 0.15.0 by six agents working from `docs/gaps-brief.md`,
 then integrated, reviewed and tested together.
 
-Measured on 2026-11-04 against glass-ux 0.15.0, in the same headless environment. SwiftShader timings find stalls;
+Measured on 2026-11-04 against glass-ux 0.15.0, and rechecked on 0.16.0, in the same headless environment. SwiftShader timings find stalls;
 they say nothing about GPU speed.
 
 | Check | Result |
