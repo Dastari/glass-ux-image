@@ -102,7 +102,7 @@ test('host key overrides disable the old binding and change hold-to-pan without 
 for(const kit of ['basic','standard','advanced'])test(`PhotoEditor accepts ${kit} kit with reachable tools`,async({page})=>{
   await page.goto(`/?view=editor&kit=${kit}`);await expect(page.locator('.gi-photo-stage canvas')).toHaveCount(1);
   await page.getByLabel('Open an image').setInputFiles('apps/demo/src/assets/sample.png');
-  await expect(page.locator('.gi-photo-foot')).toContainText('1,500 × 1,000');
+  await expect(page.locator('.gi-photo-foot')).toContainText('1,500 × 1,000',{timeout:20_000});
   // A readiness wait, not a speed check: SwiftShader's first paint takes about 4 s at a 4x slower CPU, the same
   // before and after 0.1.0's changes, which left a hosted runner too close to the default 5 s.
   await expect.poll(async()=>(await page.locator('.gi-stage-surface canvas').screenshot()).byteLength,{timeout:20_000}).toBeGreaterThan(15000);

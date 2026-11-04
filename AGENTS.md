@@ -36,4 +36,7 @@ composition of public parts, and `apps/demo` is one consumer of them.
   `export LD_LIBRARY_PATH=$HOME/.cache/glass-ux-browser-libs/root/usr/lib/x86_64-linux-gnu`
 - Browser tests use SwiftShader, which runs WebGL2 on the CPU. Their timings find stalls. They say
   nothing about real GPU speed, so never report them as if they did.
+- Frame-time limits are set on the reference machine. A test may scale its limit by `slowdown(page)` from
+  `e2e/fixtures/speed.ts`, which times a fixed workload and never returns less than 1, so a limit relaxes only on
+  a slower runner and prints the factor. Never change a limit itself to make a test pass.
 - `mockups/` is a separate design fixture with its own install: `pnpm install --ignore-workspace`.
