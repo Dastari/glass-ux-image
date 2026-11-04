@@ -172,10 +172,18 @@ test('every menu row carries its icon, and a tool row shows the same icon as the
   await page.setViewportSize({width:1440,height:900});
   await ready(page);
   await page.getByRole('menuitem',{name:'Edit',exact:true}).click();
-  const rows=page.getByRole('menu').getByRole('menuitem');
-  const count=await rows.count();
-  expect(count).toBeGreaterThan(10);
-  for(let i=0;i<count;i++)await expect(rows.nth(i).locator('svg').first(),await rows.nth(i).innerText()).toBeAttached();
+  const expectMenuIcons=async(name:string,minimum=1)=>{
+    const popup=page.getByRole('menu',{name,exact:true});
+    await expect(popup).toBeVisible();
+    // Menu content arrives after opening, and the previous popup can remain during
+    // its exit. Wait for the named menu and inspect its rows in one DOM read.
+    await expect(async()=>{
+      const icons=await popup.getByRole('menuitem').evaluateAll(items=>items.map(item=>({label:item.textContent,hasIcon:!!item.querySelector('svg')})));
+      expect(icons.length,name).toBeGreaterThanOrEqual(minimum);
+      for(const icon of icons)expect(icon.hasIcon,`${name}: ${icon.label}`).toBe(true);
+    }).toPass({timeout:5000});
+  };
+  await expectMenuIcons('Edit',11);
   const shape=async(locator:import('@playwright/test').Locator)=>locator.locator('svg').first().evaluate(svg=>[...svg.querySelectorAll('path,rect,circle,line,polyline')].map(e=>e.outerHTML.replace(/ class="[^"]*"/g,'')).join(''));
   const crop=await shape(page.getByRole('menuitem',{name:/^Crop/}));
   await page.keyboard.press('Escape');
@@ -183,8 +191,7 @@ test('every menu row carries its icon, and a tool row shows the same icon as the
   expect(await shape(page.locator('.gi-workspace-right-head .gi-tool-rail').getByRole('radio',{name:'Crop'}).or(page.locator('.gi-workspace-right-head .gi-tool-rail').getByRole('button',{name:/^Crop/})).first())).toBe(crop);
   for(const menu of ['File','View','Help']){
     await page.getByRole('menuitem',{name:menu,exact:true}).click();
-    const items=page.getByRole('menu').getByRole('menuitem');
-    for(let i=0;i<await items.count();i++)await expect(items.nth(i).locator('svg').first(),`${menu}: ${await items.nth(i).innerText()}`).toBeAttached();
+    await expectMenuIcons(menu);
     await page.keyboard.press('Escape');
   }
 });
