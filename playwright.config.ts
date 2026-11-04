@@ -8,6 +8,9 @@ export default defineConfig({
   testDir: "e2e",
   testIgnore: "docs.spec.ts",
   timeout: 120_000,
+  // Readiness waits (an image opening, a first paint) need longer on hosted runners, which run SwiftShader several
+  // times slower than a workstation. Performance assertions use explicit limits and are not affected.
+  expect: { timeout: process.env.CI ? 15_000 : 5_000 },
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
