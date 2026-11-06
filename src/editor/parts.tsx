@@ -44,7 +44,7 @@ export interface ToolRailProps {
   /**
    * What happens when the tools do not fit one row. `fold` (default) folds them into the toolbar's
    * More menu; `wrap` keeps every tool in sight on further rows, with Reset at the end of the first.
-   * A Glass UX toolbar folds a group as a whole, so in a fixed-width column `wrap` never hides them all.
+   * Since Glass UX 0.18 a choice group folds one tool at a time, so `fold` suits a narrow column too.
    */
   layout?:'fold'|'wrap';
 }

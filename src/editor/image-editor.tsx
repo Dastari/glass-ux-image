@@ -137,7 +137,7 @@ function RightRegion(){
   const active=tools.find(t=>t.id===state.tool), names=useContext(ToolNames),run=useContext(WorkspaceCommands);
   // The histogram and the tool rail stay at the top; only the settings under them scroll.
   const histogram=slots.right!==undefined?null:slots.histogram!==undefined?slots.histogram:<HistogramPanel/>;
-  const rail=slots.right!==undefined?null:slots.tools!==undefined?slots.tools:tools.length<2?null:<ToolRail tools={tools} toolLabels={names} layout="wrap" onToolSelect={id=>run(`tool.${id}`)}/>;
+  const rail=slots.right!==undefined?null:slots.tools!==undefined?slots.tools:tools.length<2?null:<ToolRail tools={tools} toolLabels={names} onToolSelect={id=>run(`tool.${id}`)}/>;
   return <div role="group" className="gi-workspace-region gi-workspace-right" data-workspace-region="" tabIndex={-1} aria-label={m.settings}>
     {(histogram||rail)&&<div className="gi-workspace-right-head">{histogram}{rail}</div>}
     <ScrollArea className="gi-workspace-right-scroll" orientation="vertical" edges="hairline"><div className="gi-workspace-right-content">{slots.right!==undefined?slots.right:<>

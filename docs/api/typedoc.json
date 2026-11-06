@@ -28308,15 +28308,15 @@
 									},
 									{
 										"kind": "text",
-										"text": " keeps every tool in sight on further rows, with Reset at the end of the first.\nA Glass UX toolbar folds a group as a whole, so in a fixed-width column "
+										"text": " keeps every tool in sight on further rows, with Reset at the end of the first.\nSince Glass UX 0.18 a choice group folds one tool at a time, so "
 									},
 									{
 										"kind": "code",
-										"text": "`wrap`"
+										"text": "`fold`"
 									},
 									{
 										"kind": "text",
-										"text": " never hides them all."
+										"text": " suits a narrow column too."
 									}
 								]
 							},
@@ -88716,9 +88716,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 50,
+									"line": 52,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L50"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L52"
 								}
 							],
 							"type": {
@@ -88745,9 +88745,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 52,
+									"line": 54,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L52"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L54"
 								}
 							],
 							"type": {
@@ -88776,9 +88776,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 58,
+									"line": 60,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L58"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L60"
 								}
 							],
 							"type": {
@@ -88805,9 +88805,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 54,
+									"line": 56,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L54"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L56"
 								}
 							],
 							"type": {
@@ -88836,9 +88836,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 46,
+									"line": 48,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L46"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L48"
 								}
 							],
 							"type": {
@@ -88867,9 +88867,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 48,
+									"line": 50,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L48"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L50"
 								}
 							],
 							"type": {
@@ -88896,9 +88896,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 56,
+									"line": 58,
 									"character": 2,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L56"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L58"
 								}
 							],
 							"type": {
@@ -88958,9 +88958,9 @@
 					"sources": [
 						{
 							"fileName": "src/panels/histogram.tsx",
-							"line": 44,
+							"line": 46,
 							"character": 17,
-							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L44"
+							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L46"
 						}
 					]
 				},
@@ -89021,9 +89021,9 @@
 					"sources": [
 						{
 							"fileName": "src/panels/histogram.tsx",
-							"line": 42,
+							"line": 44,
 							"character": 16,
-							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L42"
+							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L44"
 						}
 					],
 					"signatures": [
@@ -89044,9 +89044,9 @@
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 42,
+									"line": 44,
 									"character": 16,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L42"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L44"
 								}
 							],
 							"parameters": [
@@ -89078,9 +89078,9 @@
 					"sources": [
 						{
 							"fileName": "src/panels/histogram.tsx",
-							"line": 64,
+							"line": 66,
 							"character": 16,
-							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L64"
+							"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L66"
 						}
 					],
 					"signatures": [
@@ -89094,16 +89094,16 @@
 								"summary": [
 									{
 										"kind": "text",
-										"text": "Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB overlays one\nhistogram per channel, each in its own colour, so where channels agree reads as neutral."
+										"text": "Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB is one histogram\nwith a series per channel, each in its own colour, screen-blended so where channels agree reads as neutral."
 									}
 								]
 							},
 							"sources": [
 								{
 									"fileName": "src/panels/histogram.tsx",
-									"line": 64,
+									"line": 66,
 									"character": 16,
-									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L64"
+									"url": "https://github.com/Dastari/glass-ux-image/blob/v0.2.1/src/panels/histogram.tsx#L66"
 								}
 							],
 							"parameters": [
@@ -207979,11 +207979,11 @@
 	"readme": [
 		{
 			"kind": "text",
-			"text": "# glass-ux-image\n\nImage editing components and a tiled image engine for [Glass UX](https://github.com/Dastari/glass-ux).\nUse a plain control, a photo editor, a workspace, public hooks or the headless engine. The host\nowns saving, transport and persistence.\n\nInstall Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.17:\n\n"
+			"text": "# glass-ux-image\n\nImage editing components and a tiled image engine for [Glass UX](https://github.com/Dastari/glass-ux).\nUse a plain control, a photo editor, a workspace, public hooks or the headless engine. The host\nowns saving, transport and persistence.\n\nInstall Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.18:\n\n"
 		},
 		{
 			"kind": "code",
-			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.17.1/glass-ux-0.17.1.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.2.1/glass-ux-image-0.2.1.tgz\n```"
+			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.18.0/glass-ux-0.18.0.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.2.1/glass-ux-image-0.2.1.tgz\n```"
 		},
 		{
 			"kind": "text",
