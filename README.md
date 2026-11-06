@@ -4,10 +4,10 @@ Image editing components and a tiled image engine for [Glass UX](https://github.
 Use a plain control, a photo editor, a workspace, public hooks or the headless engine. The host
 owns saving, transport and persistence.
 
-Install Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.17:
+Install Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.18:
 
 ```sh
-pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.17.1/glass-ux-0.17.1.tgz
+pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.18.0/glass-ux-0.18.0.tgz
 pnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.2.1/glass-ux-image-0.2.1.tgz
 ```
 

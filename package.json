@@ -173,7 +173,7 @@
     "utif2": "^4.1.0"
   },
   "peerDependencies": {
-    "glass-ux": ">=0.17 <0.18",
+    "glass-ux": ">=0.18 <0.19",
     "react": ">=19 <20",
     "react-dom": ">=19 <20"
   },
@@ -194,8 +194,8 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.17.1/glass-ux-0.17.1.tgz",
-    "glass-ux-docs-kit": "https://github.com/Dastari/glass-ux/releases/download/v0.17.1/glass-ux-docs-kit-0.17.1.tgz",
+    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.18.0/glass-ux-0.18.0.tgz",
+    "glass-ux-docs-kit": "https://github.com/Dastari/glass-ux/releases/download/v0.18.0/glass-ux-docs-kit-0.18.0.tgz",
     "oxlint": "^1.87.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
