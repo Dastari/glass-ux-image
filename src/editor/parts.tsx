@@ -74,7 +74,7 @@ export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true,lay
   {/* Always present, so the row does not shift as tools change; it names what it resets. */}
   {/* Direct children, not a fragment: the toolbar reads each item's priority from its own children. */}
   {reset&&<Toolbar.Spacer/>}
-  {reset&&<Toolbar.Button label={base.reset} showLabel priority="always" tooltip={active?base.resetTool(labelOf(active)):false} disabled={!change} disabledReason={change?undefined:base.nothingToReset} onClick={()=>{if(change&&active)session.commit(change,{label:base.resetTool(labelOf(active))});}}/>}
+  {reset&&<Toolbar.Button label={base.reset} showLabel priority="always" tooltip={active?base.resetTool(labelOf(active)):false} disabledReason={change?undefined:base.nothingToReset} onClick={()=>{if(change&&active)session.commit(change,{label:base.resetTool(labelOf(active))});}}/>}
   </Toolbar></div>;
 }
 /** Whole-picture comparison. It reads previews without changing recipes or undo history. */

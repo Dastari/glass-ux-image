@@ -193,7 +193,7 @@ function RouteLoading() {
 const RENDERING_KEY = "glass-ux-image.docs.glass-rendering";
 const storedRendering = (): GlassRendering => {
   try {
-    return localStorage.getItem(RENDERING_KEY) === "baked" ? "baked" : "live";
+    return localStorage.getItem(RENDERING_KEY) === "none" ? "none" : "live";
   } catch {
     return "live";
   }
@@ -215,8 +215,7 @@ function setGlassRendering(glassRendering: GlassRendering) {
   }
   configureAppearance({ ...appearanceConfig(), glassRendering });
   // What applyAppearance and the boot script set from the configuration.
-  if (glassRendering === "baked")
-    document.documentElement.dataset.glassRendering = "baked";
+  if (glassRendering === "none") document.documentElement.dataset.glassRendering = "none";
   else delete document.documentElement.dataset.glassRendering;
   for (const listener of renderingListeners) listener();
 }
@@ -232,7 +231,7 @@ function useGlassRendering(): GlassRendering {
 }
 const RENDERING_OPTIONS: Array<{ value: GlassRendering; label: string }> = [
   { value: "live", label: "Live" },
-  { value: "baked", label: "Baked" },
+  { value: "none", label: "None" },
 ];
 
 function RepositoryLink() {

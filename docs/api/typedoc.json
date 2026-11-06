@@ -207979,11 +207979,11 @@
 	"readme": [
 		{
 			"kind": "text",
-			"text": "# glass-ux-image\n\nImage editing components and a tiled image engine for [Glass UX](https://github.com/Dastari/glass-ux).\nUse a plain control, a photo editor, a workspace, public hooks or the headless engine. The host\nowns saving, transport and persistence.\n\nInstall Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.16:\n\n"
+			"text": "# glass-ux-image\n\nImage editing components and a tiled image engine for [Glass UX](https://github.com/Dastari/glass-ux).\nUse a plain control, a photo editor, a workspace, public hooks or the headless engine. The host\nowns saving, transport and persistence.\n\nInstall Glass UX and this package from their GitHub releases. glass-ux-image 0.2.1 needs glass-ux 0.17:\n\n"
 		},
 		{
 			"kind": "code",
-			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.16.1/glass-ux-0.16.1.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.2.1/glass-ux-image-0.2.1.tgz\n```"
+			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.17.1/glass-ux-0.17.1.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.2.1/glass-ux-image-0.2.1.tgz\n```"
 		},
 		{
 			"kind": "text",
