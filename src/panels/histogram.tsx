@@ -38,6 +38,8 @@ export function useDevelopPreview(editor:EditorSession,maxEdge=192,recipe?: (dra
 export type HistogramChannel='rgb'|'luminance'|'red'|'green'|'blue';
 const CHANNELS=['rgb','luminance','red','green','blue'] as const satisfies readonly HistogramChannel[];
 const COLOURS=['red','green','blue'] as const;
+/** Each channel's own primary (defined in develop.css): the data, not a categorical slot, so it is the same in every palette. */
+const CHANNEL_COLOURS={red:'var(--gi-channel-red)',green:'var(--gi-channel-green)',blue:'var(--gi-channel-blue)'} as const;
 /** Columns about 7 px apart: wide enough that Histogram's 2 px gap reads as a gap, not as stripes. */
 export function autoBins(width:number){return Math.max(16,Math.min(128,Math.round((width||224)/7/8)*8));}
 /** Session-bound histogram panel; may be placed independently of any editor composition. */
@@ -58,8 +60,8 @@ export interface HistogramPanelProps {
   className?:string;
 }
 /**
- * Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB overlays one
- * histogram per channel, each in its own colour, so where channels agree reads as neutral.
+ * Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB is one histogram
+ * with a series per channel, each in its own colour, screen-blended so where channels agree reads as neutral.
  */
 export function HistogramPanel({editor,maxEdge=192,bins:fixedBins,channel,defaultChannel='rgb',onChannelChange,className}:HistogramPanelProps) {
   const session=useEditor(editor);useSessionState(session);
@@ -67,16 +69,14 @@ export function HistogramPanel({editor,maxEdge=192,bins:fixedBins,channel,defaul
   const {pixels,failed}=useDevelopPreview(session,maxEdge),m=useMessages(developMessages),[own,setOwn]=useState<HistogramChannel>(defaultChannel),selected=channel??own;
   const data:HistogramData|undefined=useMemo(()=>pixels?computeHistogram(pixels,bins):undefined,[pixels,bins]);
   const state=failed?'error':pixels?'ready':'loading';
-  const chart=(c:Exclude<HistogramChannel,'rgb'>,label:string)=>{
-    const counts=data?.[c]??new Float64Array(bins);
-    return <Histogram key={c} data-histogram-channel={c} label={label} countLabel={m.pixels} state={state} errorText={m.error} bins={Array.from(counts,(count,i)=>({from:i/bins,to:(i+1)/bins,count}))}/>;
-  };
+  const binsOf=(c:Exclude<HistogramChannel,'rgb'>)=>Array.from(data?.[c]??new Float64Array(bins),(count,i)=>({from:i/bins,to:(i+1)/bins,count}));
+  const common={countLabel:m.pixels,state,errorText:m.error} as const;
   return <div className={['gi-develop-histogram',className].filter(Boolean).join(' ')} data-testid="develop-histogram" data-weight={data?.weight??0} data-channel={selected}>
     <div className="gi-develop-histogram-head"><span className="gi-develop-histogram-title">{m.histogram}</span><Segmented size="sm" collapse="menu" aria-label={m.channel} options={CHANNELS.map(c=>({value:c,label:m[c]}))} value={selected} onValueChange={v=>{if(v){if(channel===undefined)setOwn(v);onChannelChange?.(v);}}}/></div>
     <div ref={well} className="gi-develop-histogram-chart" data-channel={selected} data-mode="dark">
       {selected==='rgb'
-        ?<div className="gi-develop-histogram-rgb" role="group" aria-label={m.histogram}>{COLOURS.map(c=>chart(c,m[c]))}</div>
-        :chart(selected,selected==='luminance'?m.histogram:m[selected])}
+        ?<Histogram {...common} label={m.histogram} blend="screen" series={COLOURS.map(c=>({key:c,label:m[c],color:CHANNEL_COLOURS[c],bins:binsOf(c)}))}/>
+        :<Histogram {...common} data-histogram-channel={selected} label={selected==='luminance'?m.histogram:m[selected]} bins={binsOf(selected)}/>}
     </div>
   </div>;
 }

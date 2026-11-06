@@ -87,17 +87,13 @@ test('the file reader passes Glass UX FileProvider conformance in the browser an
   expect(await page.evaluate(() => window.providerProof!.stale())).toBe('changed');
 });
 
-test('the histogram overlays red, green and blue by default and offers each channel and luminance', async ({ page }) => {
+test('the histogram draws red, green and blue as one blended plot by default and offers each channel and luminance', async ({ page }) => {
   await workspace(page);
   const histogram = page.locator('.gi-workspace-right-head > .gi-develop-histogram');
   await expect(histogram).toHaveAttribute('data-channel', 'rgb');
-  const charts = histogram.locator('.fa-chart');
-  await expect(charts).toHaveCount(3);
-  for (const channel of ['red', 'green', 'blue']) {
-    const chart = histogram.locator(`[data-histogram-channel="${channel}"]`);
-    await expect.poll(() => chart.locator('.fa-chart-bar').evaluateAll(bars => bars.filter(bar => bar.getBoundingClientRect().height > 0).length)).toBeGreaterThan(0);
-  }
-  // Each channel draws in its own colour, whatever the palette.
+  // One plot with three screen-blended series, each in its own colour whatever the palette.
+  await expect(histogram.locator('.fa-chart')).toHaveCount(1);
+  await expect.poll(() => histogram.locator('.fa-chart-bar').evaluateAll(bars => bars.filter(bar => bar.getBoundingClientRect().height > 0).length)).toBeGreaterThan(0);
   const fills = await histogram.locator('.fa-chart-sheen-bottom').evaluateAll(stops => stops.map(stop => getComputedStyle(stop).stopColor));
   expect(new Set(fills).size).toBe(3);
   // The well is the stage's neutral in light mode too.

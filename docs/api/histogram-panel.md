@@ -1,7 +1,7 @@
 # HistogramPanel
 
-Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB overlays one
-histogram per channel, each in its own colour, so where channels agree reads as neutral.
+Glass UX Histogram fed by readPreview, including uncommitted slider drafts. RGB is one histogram
+with a series per channel, each in its own colour, screen-blended so where channels agree reads as neutral.
 
 `import { HistogramPanel } from "glass-ux-image/panels/histogram"`
 

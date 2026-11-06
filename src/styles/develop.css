@@ -15,7 +15,7 @@
   .gi-develop-histogram-title { min-inline-size: 0; overflow: clip; overflow-clip-margin: var(--focus-reach); text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--weight-medium); }
   /* Under 5rem the chart takes its micro tier: columns only, no axis ticks to read. */
   .gi-develop-histogram-chart { padding: var(--space-2); border-radius: var(--radius-tile); background: var(--gi-stage-well); box-shadow: inset 0 0 0 var(--border-width) var(--line); }
-  .gi-develop-histogram-chart > .fa-chart, .gi-develop-histogram-rgb > .fa-chart { block-size: 4.5rem; }
+  .gi-develop-histogram-chart > .fa-chart { block-size: 4.5rem; }
   /* RGB: the three channels share one plot. The colours are the data (each channel's own primary),
      not categorical slots, so they stay the same in every palette. Where channels overlap they add up
      towards white, as in a camera or Lightroom histogram. The well is a dark island in every mode,
@@ -32,8 +32,6 @@
   .gi-develop-histogram-chart [data-histogram-channel="red"] { --chart-1: var(--gi-channel-red); }
   .gi-develop-histogram-chart [data-histogram-channel="green"] { --chart-1: var(--gi-channel-green); }
   .gi-develop-histogram-chart [data-histogram-channel="blue"] { --chart-1: var(--gi-channel-blue); }
-  .gi-develop-histogram-rgb { display: grid; isolation: isolate; }
-  .gi-develop-histogram-rgb > .fa-chart { grid-area: 1 / 1; mix-blend-mode: screen; }
   .gi-develop-compare { position: absolute; inset: 0; z-index: 1; background: var(--gi-stage); }
   .gi-develop-compare > .fa-compare { block-size: 100%; }
   .gi-develop-compare img { display: block; inline-size: 100%; block-size: 100%; object-fit: contain; }
