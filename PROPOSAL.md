@@ -3,11 +3,11 @@
 `glass-ux-image` is a component library that plugs into Glass UX. It is not an application. The
 full editor is one composition of its parts, and the demo site is one consumer of that composition.
 
-Status: 0.2.1 on glass-ux 0.16.1; 0.2.0 delivered the owner's workspace review. Stages 1 to 3 are built, in `src/` and
+Status: 0.3.0 on glass-ux 0.19.0; 0.2.0 delivered the owner's workspace review. Stages 1 to 3 are built, in `src/` and
 `apps/demo/`: the engine, `PhotoEditor`, `ImageEditor`, every tool, the kits and templates, and the hooks and
 parts under them. The owner reordered the later stages on 2026-11-02: `docs/stage-3-brief.md` records that
 work and its engine contract, and `docs/gaps-brief.md` the work that closed the remaining gaps before 0.1.0. Mock-ups live in `mockups/` and
-are built with the published `glass-ux` 0.16.1 release.
+are built with the published `glass-ux` 0.19.0 release.
 
 ```sh
 cd mockups && pnpm install --ignore-workspace && pnpm dev   # http://<host>:4320/?s=docked
