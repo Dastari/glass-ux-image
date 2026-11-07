@@ -41,19 +41,13 @@ export interface ToolRailProps {
   onToolSelect?:(id:string)=>void;
   /** Show a Reset button at the end that removes the chosen tool's edits as one undo step. Default true. */
   reset?:boolean;
-  /**
-   * What happens when the tools do not fit one row. `fold` (default) folds them into the toolbar's
-   * More menu; `wrap` keeps every tool in sight on further rows, with Reset at the end of the first.
-   * Since Glass UX 0.18 a choice group folds one tool at a time, so `fold` suits a narrow column too.
-   */
-  layout?:'fold'|'wrap';
 }
 /**
  * One single-choice toolbar; large kits group by public tool family. A tool marked `standalone`
  * keeps its own button after its family's flyout, except a standalone first tool, which leads the
  * rail on its own as Photoshop's Move tool does.
  */
-export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true,layout='fold'}:ToolRailProps) {
+export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true}:ToolRailProps) {
   const session=useEditor(editor),state=useSessionState(session),m=useMessages(workspaceMessages),base=useMessages(imageEditorMessages);
   const lead=tools[0]?.standalone?tools[0]:undefined,rest=lead?tools.slice(1):tools;
   const groups=[...new Set(rest.map(t=>t.group??'geometry'))];
@@ -61,7 +55,7 @@ export function ToolRail({tools,editor,toolLabels={},onToolSelect,reset=true,lay
   const labelOf=(t:ImageTool)=>toolLabels[t.id]??t.label(t.messages?.defaults??base);
   const button=(t:ImageTool)=><Toolbar.Button key={t.id} value={t.id} label={labelOf(t)} icon={t.icon} disabled={disabled}/>;
   const active=tools.find(t=>t.id===state.tool),change=active?toolResetChange(session,active):null;
-  return <div className="gi-tool-rail" data-layout={layout}><Toolbar aria-label={base.tools} overflow={layout==='fold'}><Toolbar.Group aria-label={base.tools} value={state.tool??''} onValueChange={id=>onToolSelect?onToolSelect(id):session.run('tool.select',id)}>
+  return <div className="gi-tool-rail"><Toolbar aria-label={base.tools}><Toolbar.Group aria-label={base.tools} value={state.tool??''} onValueChange={id=>onToolSelect?onToolSelect(id):session.run('tool.select',id)}>
     {lead&&button(lead)}
     {groups.flatMap(group=>{
       const family=rest.filter(t=>(t.group??'geometry')===group),folded=family.filter(t=>!t.standalone);

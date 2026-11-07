@@ -33,11 +33,6 @@
   /* The rail reaches into the column's inset as far as the focus ring allows, which also lines its first
      icon up with the histogram's edge. */
   .gi-workspace-right-head > .gi-tool-rail, .gi-workspace-right-content > .gi-tool-rail { margin-inline:calc(var(--focus-reach) - var(--space-3)); }
-  /* A wrapping rail: the tools take further rows rather than vanishing into More (a toolbar folds a
-     group whole), and Reset keeps its place at the end of the first row. */
-  .gi-tool-rail[data-layout="wrap"] .fa-toolbar { align-items:flex-start; }
-  .gi-tool-rail[data-layout="wrap"] .fa-toolbar-unit:has(> .fa-toolbar-group) { flex:0 1 auto; min-inline-size:0; }
-  .gi-tool-rail[data-layout="wrap"] .fa-toolbar-group { flex-wrap:wrap; row-gap:var(--space-half); }
   .gi-workspace-right-content { display:flex; flex-direction:column; gap:var(--space-4); }
   .gi-workspace-region-content, .gi-workspace-right-content { contain:inline-size; }
   .gi-workspace-right-content > * { flex-shrink:0; }
