@@ -56,7 +56,7 @@ test('the Info tool has its own rail button and reads everything about a camera 
   const panel = await camera(page);
   expect(await page.evaluate(() => { const d = window.__workspaceDemo!; return d.pictures.find(p => p.id === d.selected)!.editor.state.tool; })).toBe('info');
   // Its own button in the rail, not a member of the files flyout.
-  await expect(page.locator('.gi-tool-rail .fa-toolbar-group > [aria-label="Image information"]')).toHaveCount(1);
+  await expect(page.locator('.gi-tool-rail .fa-toolbar-group [aria-label="Image information"]')).toHaveCount(1);
   const expectRow = async (label: string, value: string | RegExp) => expect(row(panel, label).locator('dd')).toContainText(value);
   await expectRow('Name', 'harbour-dawn.jpg');
   await expectRow('Compression', /Lossy · Progressive|Lossy/);
