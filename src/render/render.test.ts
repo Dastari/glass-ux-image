@@ -221,7 +221,8 @@ describe("export", () => {
     const controller = new AbortController();
     controller.abort(new Error("Stopped"));
     await expect(composeDocument(new HeadlessBackend(), document, { signal: controller.signal })).rejects.toThrow("Stopped");
-  });
+    // Composes 600×400 twice on the CPU: 2 s here, past the 5 s default when shared runners are busy.
+  }, 30_000);
 
   it("composes a coarser level for a smaller result", async () => {
     const document = createImageDocument({ width: 600, height: 400 });
