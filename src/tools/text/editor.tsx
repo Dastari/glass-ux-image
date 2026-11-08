@@ -26,7 +26,8 @@ export function TextEditor({ value, style, onPreview, onCommit, onCancel }: Text
   const finish = () => { if (!ended.current) { ended.current = true; onCommit({ ...value, content }); } };
   const cancel = () => { if (!ended.current) { ended.current = true; onCancel(); } };
   return <div className="gi-text-edit-wrap" data-canvas-tool="" style={style} onPointerDown={event => event.stopPropagation()}>
-    <Textarea ref={input} aria-label={m.editText} dir={value.direction} value={content} resize={false} wrap={value.boxWidth ? "soft" : "off"}
+    {/* The editor matches the layer's own size on the picture, so it opts out of Glass UX's 16 px touch floor. */}
+    <Textarea ref={input} aria-label={m.editText} dir={value.direction} value={content} resize={false} wrap={value.boxWidth ? "soft" : "off"} data-own-font-size=""
       style={{ fontFamily: value.fontFamily, fontSize: value.fontSize, fontWeight: value.fontWeight,
         fontStyle: value.fontStyle, lineHeight: `${value.lineHeight}px`, letterSpacing: `${value.letterSpacing}px`,
         textAlign: value.alignment, inlineSize: value.boxWidth ?? Math.max(value.fontSize * 8, 160) }}

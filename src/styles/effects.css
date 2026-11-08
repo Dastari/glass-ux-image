@@ -1,7 +1,7 @@
 @layer components {
  /* A gallery of thumbnail tiles: picture on top, name under it, the radio mark over the picture's corner. */
  .gi-filter-gallery.fa-radio-cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr)); gap: var(--space-2); padding: var(--focus-reach); min-inline-size: 0; }
- .gi-filter-gallery .gi-filter-choice { position: relative; display: flex; flex-direction: column; align-items: stretch; block-size: auto; min-inline-size: 0; white-space: normal; padding: var(--space-1-5); gap: var(--space-1-5); border-radius: var(--radius-tile); }
+ .gi-filter-gallery .gi-filter-choice { position: relative; display: flex; flex-direction: column; align-items: stretch; block-size: auto; min-inline-size: 0; padding: var(--space-1-5); gap: var(--space-1-5); border-radius: var(--radius-tile); }
  .gi-filter-gallery .gi-filter-choice > .fa-radio-card-circle { position: absolute; z-index: 1; inset-block-start: var(--space-2-5); inset-inline-start: var(--space-2-5); }
  .gi-filter-gallery .gi-filter-choice > .fa-radio-card-circle:not(:has([data-checked], [data-starting-style])) { opacity: 0; }
  .gi-filter-gallery .gi-filter-choice .fa-radio-card-title { font-size: var(--type-caption-size); line-height: var(--type-caption-line); font-weight: var(--weight-medium); }
