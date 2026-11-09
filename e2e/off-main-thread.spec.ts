@@ -8,6 +8,8 @@ declare global {
       completed: number;
       ticks: number;
       cancelled: number;
+      /** Workers with a job in flight right now. */
+      active: number;
     };
   }
 }
@@ -21,6 +23,7 @@ test.beforeEach(async ({ page }) => {
       completed: 0,
       ticks: 0,
       cancelled: 0,
+      active: 0,
     });
     const InstrumentedWorker = function (
       url: string | URL,
@@ -31,6 +34,7 @@ test.beforeEach(async ({ page }) => {
       let busy = false;
       worker.addEventListener("message", () => {
         probe.completed++;
+        if (busy) probe.active--;
         busy = false;
       });
       const post = worker.postMessage.bind(worker),
@@ -40,6 +44,7 @@ test.beforeEach(async ({ page }) => {
         transfer?: Transferable[] | StructuredSerializeOptions,
       ) => {
         probe.requests++;
+        if (!busy) probe.active++;
         busy = true;
         const tick = () => {
           if (busy) {
@@ -52,7 +57,10 @@ test.beforeEach(async ({ page }) => {
         else post(message, transfer);
       };
       worker.terminate = () => {
-        if (busy) probe.cancelled++;
+        if (busy) {
+          probe.cancelled++;
+          probe.active--;
+        }
         busy = false;
         terminate();
       };
@@ -166,8 +174,12 @@ test("disposing the CPU renderer cancels active composition and rejects settle",
     before,
   );
   const result = await page.evaluate(async () => {
-    const renderer = window.__renderer!;
+    const renderer = window.__renderer!, probe = window.__cpuWorkerProbe!;
     const work = renderer.settle();
+    // Dispose while a job is in flight: between tiles there is a moment with none, and a slow runner can land there.
+    const started = performance.now();
+    while (probe.active === 0 && performance.now() - started < 10_000)
+      await new Promise((resolve) => setTimeout(resolve, 0));
     renderer.dispose();
     try {
       await work;
