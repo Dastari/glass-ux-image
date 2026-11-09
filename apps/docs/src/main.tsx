@@ -17,7 +17,6 @@ import {
   useRef,
   useEffect,
   useState,
-  useSyncExternalStore,
   type ReactElement,
   type ReactNode,
 } from "react";
@@ -188,47 +187,16 @@ function RouteLoading() {
   );
 }
 
-// An application picks one glass rendering in configureAppearance. The documentation lets a
-// visitor try both, so it keeps their choice under its own key and configures again on change.
-const RENDERING_KEY = "glass-ux-image.docs.glass-rendering";
-const storedRendering = (): GlassRendering => {
-  try {
-    return localStorage.getItem(RENDERING_KEY) === "none" ? "none" : "live";
-  } catch {
-    return "live";
-  }
-};
+// Blur is a visitor's own appearance preference (glass-ux 0.19.4): Glass UX stores it, restores it before
+// first paint and includes it in Reset, so the site only sets the default.
 configureAppearance({
   defaults: {
     palette: "ocean",
     style: import.meta.env.VITE_GLASS_UX_STYLE === "flat" ? "flat" : "glass",
+    glassRendering: "live",
   },
-  glassRendering: storedRendering(),
 });
 
-const renderingListeners = new Set<() => void>();
-function setGlassRendering(glassRendering: GlassRendering) {
-  try {
-    localStorage.setItem(RENDERING_KEY, glassRendering);
-  } catch {
-    // Private mode: the choice lasts for this page only.
-  }
-  configureAppearance({ ...appearanceConfig(), glassRendering });
-  // What applyAppearance and the boot script set from the configuration.
-  if (glassRendering === "none") document.documentElement.dataset.glassRendering = "none";
-  else delete document.documentElement.dataset.glassRendering;
-  for (const listener of renderingListeners) listener();
-}
-function useGlassRendering(): GlassRendering {
-  return useSyncExternalStore(
-    (listener) => {
-      renderingListeners.add(listener);
-      return () => renderingListeners.delete(listener);
-    },
-    () => appearanceConfig().glassRendering,
-    () => "live",
-  );
-}
 const RENDERING_OPTIONS: Array<{ value: GlassRendering; label: string }> = [
   { value: "live", label: "Live" },
   { value: "none", label: "None" },
@@ -385,7 +353,9 @@ function LanguageChoices() {
 
 function Toolbar({ expanded = false }: { expanded?: boolean }) {
   const { appearance, update } = useAppearance();
-  const rendering = useGlassRendering();
+  // Unset means the visitor has not chosen: the site's default (or locked) value applies.
+  const rendering = appearance.glassRendering ?? appearanceConfig().glassRendering;
+  const setGlassRendering = (glassRendering: GlassRendering) => update({ glassRendering });
   const choiceSize = use(ChoiceSize);
   const flat = appearance.style === "flat";
   if (expanded)
