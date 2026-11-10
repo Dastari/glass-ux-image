@@ -9,7 +9,7 @@
     "preview": "vite preview --host 127.0.0.1 --port 4331 --strictPort"
   },
   "dependencies": {
-    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.19.5/glass-ux-0.19.5.tgz",
+    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.19.6/glass-ux-0.19.6.tgz",
     "glass-ux-image": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0"
