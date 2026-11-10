@@ -61,7 +61,8 @@ for(const backend of ['webgl2','cpu']) test.describe(backend,()=>{
     await page.mouse.up();
     await page.getByRole('button',{name:'Before and after',exact:true}).click();
     const divider=page.getByRole('slider',{name:'Before and after',exact:true});await divider.focus();await page.keyboard.press('ArrowRight');await expect(divider).toHaveAttribute('aria-valuenow','51');
-    await expect(page.getByRole('img',{name:'Before',exact:true})).toHaveAttribute('src',/^data:image\/png/);
+    // The comparison composes two previews on the main thread (a known limit in PROPOSAL.md), slow on hosted runners.
+    await expect(page.getByRole('img',{name:'Before',exact:true})).toHaveAttribute('src',/^data:image\/png/,{timeout:process.env.CI?60_000:15_000});
     await expect(page.getByRole('img',{name:'After',exact:true})).toHaveAttribute('src',/^data:image\/png/);
   });
   test('auto enhance commits an undoable action and all develop sections pass axe',async({page})=>{

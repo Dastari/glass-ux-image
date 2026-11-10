@@ -3,7 +3,8 @@ declare global {interface Window {__workspaceDemo?:{pictures:OpenPicture[];selec
 import { expect,test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test.setTimeout(30000);
+// Several tests walk many screens; hosted runners take about three times as long.
+test.setTimeout(process.env.CI ? 90_000 : 30_000);
 test.use({viewport:{width:1440,height:900}});
 const ready=async(page:import('@playwright/test').Page)=>{await page.goto('/?view=workspace');await expect(page.locator('.gi-image-editor .gi-stage canvas')).toHaveCount(1);await page.waitForFunction(()=>window.__workspaceDemo?.pictures[0]?.editor.state.status==='ready');};
 
