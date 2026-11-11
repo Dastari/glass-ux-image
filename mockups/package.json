@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.19.8/glass-ux-0.19.8.tgz",
+    "glass-ux": "https://github.com/Dastari/glass-ux/releases/download/v0.19.9/glass-ux-0.19.9.tgz",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
