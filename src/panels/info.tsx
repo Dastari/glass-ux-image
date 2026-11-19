@@ -65,7 +65,7 @@ export function ImageInfoPanel({ source, onChange, open, defaultOpen, onOpenChan
         {rowsOf(group)}
         {group.id === 'location' && editable && hasGps && <div className="gi-info-actions"><Button size="sm" variant="secondary" icon={<IconMapPin />} onClick={() => void change({ removeGps: true }, m.removeLocation)}>{m.removeLocation}</Button></div>}
       </Accordion.Item>)}
-      {raw.length > 0 && <Accordion.Item value="all" title={m.groupAll} level={3} meta={String(entries.length)}>
+      {raw.length > 0 && <Accordion.Item value="all" title={m.groupAll} level={3} count={entries.length}>
         {raw.map(group => <section key={group.id} className="gi-info-family" aria-label={group.label}>
           <h4 className="gi-info-overline">{group.label}<span>{group.rows.length}</span></h4>
           {rowsOf(group)}
