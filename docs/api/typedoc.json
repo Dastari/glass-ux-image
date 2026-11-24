@@ -207920,7 +207920,7 @@
 		},
 		{
 			"kind": "code",
-			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.19.11/glass-ux-0.19.11.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.3.1/glass-ux-image-0.3.1.tgz\n```"
+			"text": "```sh\npnpm add https://github.com/Dastari/glass-ux/releases/download/v0.19.13/glass-ux-0.19.13.tgz\npnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.3.1/glass-ux-image-0.3.1.tgz\n```"
 		},
 		{
 			"kind": "text",
