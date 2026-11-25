@@ -7,7 +7,7 @@ owns saving, transport and persistence.
 Install Glass UX and this package from their GitHub releases. glass-ux-image 0.3.1 needs glass-ux 0.19:
 
 ```sh
-pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.19.13/glass-ux-0.19.13.tgz
+pnpm add https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz
 pnpm add https://github.com/Dastari/glass-ux-image/releases/download/v0.3.1/glass-ux-image-0.3.1.tgz
 ```
 
