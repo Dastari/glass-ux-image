@@ -43,11 +43,11 @@ importers:
         specifier: 6.3.0
         version: 6.3.0(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
       glass-ux:
-        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz
-        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
+        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz
+        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
       glass-ux-docs-kit:
-        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-docs-kit-0.19.14.tgz
-        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-docs-kit-0.19.14.tgz(glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33))(prettier@3.10.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typedoc@0.28.20(typescript@6.0.3))(typescript@6.0.3)(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-docs-kit-0.19.15.tgz
+        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-docs-kit-0.19.15.tgz(glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33))(prettier@3.10.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typedoc@0.28.20(typescript@6.0.3))(typescript@6.0.3)(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
       oxlint:
         specifier: ^1.87.0
         version: 1.90.0
@@ -79,8 +79,8 @@ importers:
   apps/demo:
     dependencies:
       glass-ux:
-        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz
-        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
+        specifier: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz
+        version: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
       glass-ux-image:
         specifier: workspace:*
         version: link:../..
@@ -1133,9 +1133,9 @@ packages:
   gl-matrix@3.4.4:
     resolution: {integrity: sha512-latSnyDNt/8zYUB6VIJ6PCh2jBjJX6gnDsoCZ7LyW7GkqrD51EWwa9qCoGixj8YqBtETQK/xY7OmpTF8xz1DdQ==}
 
-  glass-ux-docs-kit@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-docs-kit-0.19.14.tgz:
-    resolution: {integrity: sha512-r9P320NUstVFdaQkCiPHmmD5lgnu4qxGDIHQ/7JsOtJATRdjWzJUMzRXGQ39nyD78ihp/2c8/BCTf4jduBeJIg==, tarball: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-docs-kit-0.19.14.tgz}
-    version: 0.19.14
+  glass-ux-docs-kit@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-docs-kit-0.19.15.tgz:
+    resolution: {integrity: sha512-JrgwMj+l5YEEJ0aRDB5Yr/6iq0JzPANy6a0jnOnQbqSZKKsjP72aFlU4GA451cJJiitgh4UWoOfzN82lr1vUcA==, tarball: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-docs-kit-0.19.15.tgz}
+    version: 0.19.15
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -1150,9 +1150,9 @@ packages:
       vite:
         optional: true
 
-  glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz:
-    resolution: {integrity: sha512-T/CtC6TlXBUQiihKzvFjHXgPwcHwJCu/etSu+Jvu3E1HK1BrfKGuSSMogdPuKloRvQylSqPlUJFY24LzPwDkrA==, tarball: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz}
-    version: 0.19.14
+  glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz:
+    resolution: {integrity: sha512-NATPBj6tjBXKYenq6iXDmZFBvalYJPJxwrJPdd48/OE22DjT0Z4aFiWihLqNoRcIkADF40rDGdt89Hz6aG4KGA==, tarball: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz}
+    version: 0.19.15
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -2764,10 +2764,10 @@ snapshots:
 
   gl-matrix@3.4.4: {}
 
-  glass-ux-docs-kit@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-docs-kit-0.19.14.tgz(glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33))(prettier@3.10.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typedoc@0.28.20(typescript@6.0.3))(typescript@6.0.3)(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)):
+  glass-ux-docs-kit@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-docs-kit-0.19.15.tgz(glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33))(prettier@3.10.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typedoc@0.28.20(typescript@6.0.3))(typescript@6.0.3)(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)):
     dependencies:
       clsx: 2.1.1
-      glass-ux: https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
+      glass-ux: https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33)
       postcss: 8.5.33
       prettier: 3.10.1
       react: 19.3.1
@@ -2777,7 +2777,7 @@ snapshots:
     optionalDependencies:
       vite: 8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
 
-  glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.14/glass-ux-0.19.14.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33):
+  glass-ux@https://github.com/Dastari/glass-ux/releases/download/v0.19.15/glass-ux-0.19.15.tgz(@playwright/test@1.64.1)(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(yjs@13.6.33):
     dependencies:
       '@base-ui/react': 1.9.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@lexical/code': 0.53.0(typescript@6.0.3)
